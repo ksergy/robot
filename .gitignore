@@ -1,0 +1,8 @@
+.*
+*.sw?
+*~
+build
+temp
+*.user
+*.orig
+
