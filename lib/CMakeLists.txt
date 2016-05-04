@@ -1,6 +1,6 @@
 
 include_directories(.)
 
-file(GLOB_RECURSE containers_src *.c *.h)
+set(containers_src containers.c containers.h)
 
 add_library(containers SHARED ${containers_src})
