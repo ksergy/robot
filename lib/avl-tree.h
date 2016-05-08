@@ -15,7 +15,7 @@ typedef struct avl_tree avl_tree_t;
 struct avl_tree_node;
 typedef struct avl_tree_node avl_tree_node_t;
 
-typedef uint64_t key_t;
+typedef int64_t avl_tree_key_t;
 
 struct avl_tree_node {
     /*! host tree */
@@ -27,7 +27,7 @@ struct avl_tree_node {
     /*! parent node */
     avl_tree_node_t *parent;
     unsigned char height;
-    key_t key;
+    avl_tree_key_t key;
     void *data;
 };
 
@@ -39,10 +39,10 @@ struct avl_tree {
 };
 
 void avl_tree_init(avl_tree_t *tree, bool inplace, size_t node_data_size);
-avl_tree_node_t *avl_tree_get(avl_tree_t *t, key_t k);
-avl_tree_node_t *avl_tree_add(avl_tree_t *t, key_t k);
-void *avl_tree_remove_get_data(avl_tree_t *t, key_t k);
-void avl_tree_remove(avl_tree_t *t, key_t k);
+avl_tree_node_t *avl_tree_get(avl_tree_t *t, avl_tree_key_t k);
+avl_tree_node_t *avl_tree_add(avl_tree_t *t, avl_tree_key_t k);
+void *avl_tree_remove_get_data(avl_tree_t *t, avl_tree_key_t k);
+void avl_tree_remove(avl_tree_t *t, avl_tree_key_t k);
 void avl_tree_remove_direct(avl_tree_t *t, avl_tree_node_t *n);
 avl_tree_node_t *avl_tree_node_next(avl_tree_node_t *n);
 avl_tree_node_t *avl_tree_node_prev(avl_tree_node_t *n);

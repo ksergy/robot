@@ -1,4 +1,5 @@
 #include "containers.h"
+#include "avl-tree.h"
 #include <check.h>
 #include <stdlib.h>
 
@@ -10,6 +11,9 @@ int main(int argc, char *argv[]) {
 
     s = containers_suite();
     runner = srunner_create(s);
+
+    s = avl_tree_suite();
+    srunner_add_suite(runner, s);
 
     srunner_run_all(runner, CK_VERBOSE);
     nfailed = srunner_ntests_failed(runner);
