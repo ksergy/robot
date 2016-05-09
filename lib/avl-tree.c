@@ -166,6 +166,35 @@ avl_tree_node_t *node_insert(avl_tree_node_t *n,
 }
 
 static inline
+avl_tree_node_t *node_insert_or_get(avl_tree_node_t *n,
+                                    avl_tree_node_t *parent,
+                                    avl_tree_t *t,
+                                    avl_tree_key_t k,
+                                    avl_tree_node_t **inserted,
+                                    bool *node_inserted) {
+    if (!n) {
+        n = node_operators[t->inplace].allocator(t, k);
+        n->parent = parent;
+        *inserted = n;
+        *node_inserted = true;
+
+        return n;
+    }
+
+    if (k == n->key) {
+        *inserted = n;
+        return n;
+    }
+
+    if (k < n->key)
+        n->left = node_insert_or_get(n->left, n, t, k, inserted, node_inserted);
+    else
+        n->right = node_insert_or_get(n->right, n, t, k, inserted, node_inserted);
+
+    return node_balance(n);
+}
+
+static inline
 avl_tree_node_t *node_leftmost(avl_tree_node_t *n) {
     return n->left ? node_leftmost(n->left) : n;
 }
@@ -345,6 +374,16 @@ avl_tree_node_t *avl_tree_add(avl_tree_t *t, avl_tree_key_t k) {
 
     t->root = node_insert(t->root, t->root, t, k, &n);
     ++t->count;
+    return n;
+}
+
+avl_tree_node_t *avl_tree_add_or_get(avl_tree_t *t, avl_tree_key_t k) {
+    avl_tree_node_t *n;
+    bool inserted = false;
+    assert(t);
+
+    t->root = node_insert_or_get(t->root, t->root, t, k, &n, &inserted);
+    t->count += inserted;
     return n;
 }
 
