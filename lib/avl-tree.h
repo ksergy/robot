@@ -41,6 +41,7 @@ struct avl_tree {
 void avl_tree_init(avl_tree_t *tree, bool inplace, size_t node_data_size);
 avl_tree_node_t *avl_tree_get(avl_tree_t *t, avl_tree_key_t k);
 avl_tree_node_t *avl_tree_add(avl_tree_t *t, avl_tree_key_t k);
+avl_tree_node_t *avl_tree_add_or_get(avl_tree_t *t, avl_tree_key_t k);
 void *avl_tree_remove_get_data(avl_tree_t *t, avl_tree_key_t k);
 void avl_tree_remove(avl_tree_t *t, avl_tree_key_t k);
 /* void avl_tree_remove_direct(avl_tree_t *t, avl_tree_node_t *n); */
