@@ -307,6 +307,103 @@ START_TEST(test_avl_tree_node_next_prev_min_max_ok) {
 }
 END_TEST
 
+START_TEST(test_avl_tree_add_or_get_ok) {
+    avl_tree_t t;
+    avl_tree_node_t *atn[5], *n, *r;
+    avl_tree_key_t k;
+
+    init_avl_tree(t, false, 5);
+
+    k = 0;
+    atn[0] = avl_tree_add(&t, k);
+
+    k = -1;
+    atn[1] = avl_tree_add(&t, k);
+
+    k = 1;
+    atn[2] = avl_tree_add(&t, k);
+
+    k = 2;
+    atn[3] = avl_tree_add(&t, k);
+
+    k = 3;
+    atn[4] = avl_tree_add(&t, k);
+
+    ck_assert_int_eq(t.count, 5);
+
+    r = t.root;
+
+    k = 0;
+    n = avl_tree_add_or_get(&t, k);
+    ck_assert_ptr_eq(n, atn[0]);
+    ck_assert_int_eq(t.count, 5);
+    ck_assert_ptr_eq(t.root, r);
+
+    k = -1;
+    n = avl_tree_add_or_get(&t, k);
+    ck_assert_ptr_eq(n, atn[1]);
+    ck_assert_int_eq(t.count, 5);
+    ck_assert_ptr_eq(t.root, r);
+
+    k = 1;
+    n = avl_tree_add_or_get(&t, k);
+    ck_assert_ptr_eq(n, atn[2]);
+    ck_assert_int_eq(t.count, 5);
+    ck_assert_ptr_eq(t.root, r);
+
+    k = 2;
+    n = avl_tree_add_or_get(&t, k);
+    ck_assert_ptr_eq(n, atn[3]);
+    ck_assert_int_eq(t.count, 5);
+    ck_assert_ptr_eq(t.root, r);
+
+    k = 3;
+    n = avl_tree_add_or_get(&t, k);
+    ck_assert_ptr_eq(n, atn[4]);
+    ck_assert_int_eq(t.count, 5);
+    ck_assert_ptr_eq(t.root, r);
+
+    k = 4;
+    n = avl_tree_add_or_get(&t, k);
+    ck_assert_ptr_ne(n, atn[0]);
+    ck_assert_ptr_ne(n, atn[1]);
+    ck_assert_ptr_ne(n, atn[2]);
+    ck_assert_ptr_ne(n, atn[3]);
+    ck_assert_ptr_ne(n, atn[4]);
+    ck_assert_int_eq(t.count, 6);
+
+    ck_assert_ptr_eq(n->host, &t);
+    ck_assert_int_eq(n->key, k);
+
+    ck_assert_ptr_eq(t.root, atn[3]);
+    ck_assert_ptr_eq(atn[3]->parent, NULL);
+    ck_assert_ptr_eq(atn[3]->left, atn[0]);
+    ck_assert_ptr_eq(atn[3]->right, atn[4]);
+
+    ck_assert_ptr_eq(atn[0]->parent, atn[3]);
+    ck_assert_ptr_eq(atn[0]->left, atn[1]);
+    ck_assert_ptr_eq(atn[0]->right, atn[2]);
+
+    ck_assert_ptr_eq(atn[4]->parent, atn[3]);
+    ck_assert_ptr_eq(atn[4]->left, NULL);
+    ck_assert_ptr_eq(atn[4]->right, n);
+
+    ck_assert_ptr_eq(atn[1]->parent, atn[0]);
+    ck_assert_ptr_eq(atn[1]->left, NULL);
+    ck_assert_ptr_eq(atn[1]->right, NULL);
+
+    ck_assert_ptr_eq(atn[2]->parent, atn[0]);
+    ck_assert_ptr_eq(atn[2]->left, NULL);
+    ck_assert_ptr_eq(atn[2]->right, NULL);
+
+    ck_assert_ptr_eq(n->parent, atn[4]);
+    ck_assert_ptr_eq(n->left, NULL);
+    ck_assert_ptr_eq(n->right, NULL);
+
+    avl_tree_purge(&t);
+}
+END_TEST
+
 Suite *avl_tree_suite(void) {
     Suite *s;
     TCase *tc;
@@ -320,6 +417,7 @@ Suite *avl_tree_suite(void) {
     tcase_add_test(tc, test_avl_tree_get_ok);
     tcase_add_test(tc, test_avl_tree_remove_ok);
     tcase_add_test(tc, test_avl_tree_node_next_prev_min_max_ok);
+    tcase_add_test(tc, test_avl_tree_add_or_get_ok);
 
     suite_add_tcase(s, tc);
 
