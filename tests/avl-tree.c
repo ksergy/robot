@@ -203,26 +203,26 @@ START_TEST(test_avl_tree_remove_ok) {
     d = avl_tree_remove_get_data(&t, 2);
     ck_assert_ptr_eq(d, 4);
 
-    ck_assert_ptr_eq(t.root, atn[2]);
-    ck_assert_ptr_eq(atn[2]->parent, NULL);
-    ck_assert_ptr_eq(atn[2]->left, atn[0]);
-    ck_assert_ptr_eq(atn[2]->right, atn[4]);
-    ck_assert_ptr_eq(atn[2]->height, 3);
-
-    ck_assert_ptr_eq(atn[0]->parent, atn[2]);
+    ck_assert_ptr_eq(t.root, atn[0]);
+    ck_assert_ptr_eq(atn[0]->parent, NULL);
     ck_assert_ptr_eq(atn[0]->left, atn[1]);
-    ck_assert_ptr_eq(atn[0]->right, NULL);
-    ck_assert_ptr_eq(atn[0]->height, 2);
-
-    ck_assert_ptr_eq(atn[4]->parent, atn[2]);
-    ck_assert_ptr_eq(atn[4]->left, NULL);
-    ck_assert_ptr_eq(atn[4]->right, NULL);
-    ck_assert_ptr_eq(atn[4]->height, 1);
+    ck_assert_ptr_eq(atn[0]->right, atn[4]);
+    ck_assert_ptr_eq(atn[0]->height, 3);
 
     ck_assert_ptr_eq(atn[1]->parent, atn[0]);
     ck_assert_ptr_eq(atn[1]->left, NULL);
     ck_assert_ptr_eq(atn[1]->right, NULL);
     ck_assert_ptr_eq(atn[1]->height, 1);
+
+    ck_assert_ptr_eq(atn[4]->parent, atn[0]);
+    ck_assert_ptr_eq(atn[4]->left, atn[2]);
+    ck_assert_ptr_eq(atn[4]->right, NULL);
+    ck_assert_ptr_eq(atn[4]->height, 2);
+
+    ck_assert_ptr_eq(atn[2]->parent, atn[4]);
+    ck_assert_ptr_eq(atn[2]->left, NULL);
+    ck_assert_ptr_eq(atn[2]->right, NULL);
+    ck_assert_ptr_eq(atn[2]->height, 1);
 
     ck_assert_int_eq(t.count, 4);
 
