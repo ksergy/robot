@@ -10,24 +10,9 @@ typedef avl_tree_node_t *(*node_allocator)(avl_tree_t *t, avl_tree_key_t k);
 typedef void (*node_deallocator)(avl_tree_node_t *n);
 
 static
-avl_tree_node_t *node_simple_allocator(avl_tree_t *t, avl_tree_key_t k) {
-    avl_tree_node_t *n = malloc(sizeof(avl_tree_node_t));
-    n->height = 1;
-    n->data = NULL;
-    n->host = t;
-    n->key = k;
-    n->left = n->right = n->parent = NULL;
-}
-
+avl_tree_node_t *node_simple_allocator(avl_tree_t *t, avl_tree_key_t k);
 static
-avl_tree_node_t *node_inplace_allocator(avl_tree_t *t, avl_tree_key_t k) {
-    avl_tree_node_t *n = malloc(sizeof(avl_tree_node_t) + t->node_data_size);
-    n->height = 1;
-    n->data = n + 1;
-    n->host = t;
-    n->key = k;
-    n->left = n->right = n->parent = NULL;
-}
+avl_tree_node_t *node_inplace_allocator(avl_tree_t *t, avl_tree_key_t k);
 
 static const struct {
     node_allocator      allocator;
@@ -42,6 +27,36 @@ static const struct {
         .deallocator    = free
     }
 };
+
+static
+avl_tree_node_t *node_simple_allocator(avl_tree_t *t, avl_tree_key_t k) {
+    avl_tree_node_t *n = malloc(sizeof(avl_tree_node_t));
+
+    assert(n);
+
+    n->height = 1;
+    n->data = NULL;
+    n->host = t;
+    n->key = k;
+    n->left = n->right = n->parent = NULL;
+
+    return n;
+}
+
+static
+avl_tree_node_t *node_inplace_allocator(avl_tree_t *t, avl_tree_key_t k) {
+    avl_tree_node_t *n = malloc(sizeof(avl_tree_node_t) + t->node_data_size);
+
+    assert(n);
+
+    n->height = 1;
+    n->data = n + 1;
+    n->host = t;
+    n->key = k;
+    n->left = n->right = n->parent = NULL;
+
+    return n;
+}
 
 static inline
 int node_height(const avl_tree_node_t *n) {
@@ -130,15 +145,22 @@ avl_tree_node_t *node_balance(avl_tree_node_t *n) {
 
 static inline
 avl_tree_node_t *node_insert(avl_tree_node_t *n,
+                             avl_tree_node_t *parent,
                              avl_tree_t *t,
-                             avl_tree_key_t k) {
-    if (!n)
-        return node_operators[t->inplace].allocator(t, k);
+                             avl_tree_key_t k,
+                             avl_tree_node_t **inserted) {
+    if (!n) {
+        n = node_operators[t->inplace].allocator(t, k);
+        n->parent = parent;
+        *inserted = n;
+
+        return n;
+    }
 
     if (k < n->key)
-        n->left = node_insert(n->left, t, k);
+        n->left = node_insert(n->left, n, t, k, inserted);
     else
-        n->right = node_insert(n->right, t, k);
+        n->right = node_insert(n->right, n, t, k, inserted);
 
     return node_balance(n);
 }
@@ -164,15 +186,19 @@ avl_tree_node_t *node_remove_min(avl_tree_node_t *n) {
 }
 
 static inline
-bool node_is_left(const avl_tree_node_t *parent,
-                  const avl_tree_node_t *left) {
-    return !parent || (parent->left == left);
+bool node_is_left(const avl_tree_node_t *left) {
+    /* left = NULL             -> false
+     * left->parent = NULL     -> false
+     */
+    return left && (left->parent && (left->parent->left == left));
 }
 
 static inline
-bool node_is_right(const avl_tree_node_t *parent,
-                   const avl_tree_node_t *right) {
-    return !parent || (parent->right == right);
+bool node_is_right(const avl_tree_node_t *right) {
+    /* right = NULL             -> false
+     * right->parent = NULL     -> false
+     */
+    return right && (right->parent && (right->parent->right == right));
 }
 
 static inline
@@ -214,6 +240,82 @@ avl_tree_node_t *node_remove(avl_tree_node_t *n, avl_tree_key_t k) {
     return node_balance(n);
 }
 
+static inline
+avl_tree_node_t *node_get(avl_tree_node_t *n, avl_tree_key_t k) {
+    if (!n)
+        return n;
+
+    if (k > n->key)
+        return node_get(n->right, k);
+    if (k < n->key)
+        return node_get(n->left, k);
+
+    return n;
+}
+
+static inline
+avl_tree_node_t *node_next(avl_tree_node_t *n) {
+    if (!n)
+        return n;
+
+    /* n != NULL */
+
+    if (n->right)
+        return node_leftmost(n->right);
+
+    /* n->right = NULL */
+
+    if (node_is_left(n))
+        return n->parent;
+
+    n = n->parent;
+
+    while (n && !node_is_left(n))
+        n = n->parent;
+
+    if (n && !node_is_right(n))
+        n = n->parent;
+
+    return n;
+}
+
+static inline
+avl_tree_node_t *node_prev(avl_tree_node_t *n) {
+    if (!n)
+        return n;
+
+    /* n != NULL */
+
+    if (n->left)
+        return node_rightmost(n->left);
+
+    /* n->left = NULL */
+
+    if (node_is_right(n))
+        return n->parent;
+
+    n = n->parent;
+
+    while (n && node_is_left(n))
+        n = n->parent;
+
+    if (n && !node_is_left(n))
+        n = n->parent;
+
+    return n;
+}
+
+static inline
+void node_purge(avl_tree_node_t *n) {
+    if (n->left)
+        node_purge(n->left);
+
+    if (n->right)
+        node_purge(n->right);
+
+    node_operators[n->host->inplace].deallocator(n);
+}
+
 /**************** API ****************/
 void avl_tree_init(avl_tree_t *tree, bool inplace, size_t node_data_size) {
     assert(tree);
@@ -221,6 +323,7 @@ void avl_tree_init(avl_tree_t *tree, bool inplace, size_t node_data_size) {
     tree->inplace = inplace;
     tree->node_data_size = node_data_size;
     tree->count = 0;
+    tree->root = NULL;
 }
 
 avl_tree_node_t *avl_tree_get(avl_tree_t *t, avl_tree_key_t k) {
@@ -240,6 +343,52 @@ avl_tree_node_t *avl_tree_add(avl_tree_t *t, avl_tree_key_t k) {
     avl_tree_node_t *n;
     assert(t);
 
-    /* TODO */
+    t->root = node_insert(t->root, t->root, t, k, &n);
+    ++t->count;
+    return n;
 }
 
+void *avl_tree_remove_get_data(avl_tree_t *t, avl_tree_key_t k) {
+    avl_tree_node_t *n;
+    void *d;
+    assert(t);
+
+    n = node_get(t->root, k);
+    d = n->data;
+
+    t->root = node_remove(t->root, k);
+    --t->count;
+
+    return d;
+}
+
+void avl_tree_remove(avl_tree_t *t, avl_tree_key_t k) {
+    assert(t);
+
+    t->root = node_remove(t->root, k);
+    --t->count;
+}
+
+avl_tree_node_t *avl_tree_node_next(avl_tree_node_t *n) {
+    return node_next(n);
+}
+
+avl_tree_node_t *avl_tree_node_prev(avl_tree_node_t *n) {
+    return node_prev(n);
+}
+
+avl_tree_node_t *avl_tree_node_min(avl_tree_node_t *n) {
+    return node_leftmost(n);
+}
+
+avl_tree_node_t *avl_tree_node_max(avl_tree_node_t *n) {
+    return node_rightmost(n);
+}
+
+void avl_tree_purge(avl_tree_t *tree) {
+    assert(tree);
+
+    node_purge(tree->root);
+    tree->count = 0;
+    tree->root = NULL;
+}
