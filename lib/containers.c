@@ -275,7 +275,6 @@ void vector_deinit(vector_t *v) {
     v->element_size = 0;
 }
 
-
 /***************************** LIST *****************************/
 typedef list_element_t *(*list_el_allocator)(list_t *l);
 typedef void (*list_el_deallocator)(list_element_t *el);
