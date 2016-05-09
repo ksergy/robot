@@ -258,10 +258,16 @@ avl_tree_node_t *node_remove(avl_tree_node_t *n, avl_tree_key_t k) {
 
         min->parent = copy.parent;
 
+        if (min->parent) {
+            if (node_is_left(&copy)) min->parent->left = min;
+            else min->parent->right = min;
+        }
+
         if (min->left)
             min->left->parent = min;
 
-        min->right->parent = min;
+        if (min->right)
+            min->right->parent = min;
 
         return node_balance(min);
     }
