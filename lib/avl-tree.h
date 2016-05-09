@@ -43,7 +43,7 @@ avl_tree_node_t *avl_tree_get(avl_tree_t *t, avl_tree_key_t k);
 avl_tree_node_t *avl_tree_add(avl_tree_t *t, avl_tree_key_t k);
 void *avl_tree_remove_get_data(avl_tree_t *t, avl_tree_key_t k);
 void avl_tree_remove(avl_tree_t *t, avl_tree_key_t k);
-void avl_tree_remove_direct(avl_tree_t *t, avl_tree_node_t *n);
+/* void avl_tree_remove_direct(avl_tree_t *t, avl_tree_node_t *n); */
 avl_tree_node_t *avl_tree_node_next(avl_tree_node_t *n);
 avl_tree_node_t *avl_tree_node_prev(avl_tree_node_t *n);
 avl_tree_node_t *avl_tree_node_min(avl_tree_node_t *n);
