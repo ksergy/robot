@@ -2,7 +2,7 @@
 # define _HASH_FUNCTIONS_H_
 
 # include <stdint.h>
-# include <stddef.h
+# include <stddef.h>
 
 typedef int64_t hash_t;
 

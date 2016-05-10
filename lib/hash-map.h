@@ -24,6 +24,7 @@
 typedef struct hash_map {
     avl_tree_t tree;
     hash_function_t hasher;
+    hash_update_function_t hash_updater;
 } hash_map_t;
 
 typedef struct hash_map_node {
@@ -38,11 +39,14 @@ typedef struct hash_map_node_data {
     size_t size;
 } hash_map_node_data_t;
 
-void hash_map_init(hash_map_t *hm, hash_function_t hasher);
+void hash_map_init(hash_map_t *hm,
+                   hash_function_t hasher,
+                   hash_update_function_t hash_updater);
 void hash_map_purge(hash_map_t *hm);
 hash_map_node_t *hash_map_add(hash_map_t *hm, hash_t h);
 hash_map_node_t *hash_map_add_or_get(hash_map_t *hm, hash_t h);
 hash_map_node_t *hash_map_get(hash_map_t *hm, hash_t h);
+void hash_map_remove(hash_map_t *hm, hash_t *h);
 hash_map_node_t *hash_map_next(hash_map_t *hm, hash_map_node_t *hmn);
 hash_map_node_t *hash_map_prev(hash_map_t *hm, hash_map_node_t *hmn);
 hash_map_node_t *hash_map_begin(hash_map_t *hm);
