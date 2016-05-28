@@ -231,17 +231,21 @@ bool node_is_right(const avl_tree_node_t *right) {
 }
 
 static inline
-avl_tree_node_t *node_remove(avl_tree_node_t *n, avl_tree_key_t k) {
+avl_tree_node_t *node_remove(avl_tree_node_t *n, avl_tree_key_t k,
+                             bool *removed,
+                             void **_data) {
     avl_tree_node_t copy, *min;
 
     if (!n)
         return NULL;
 
     if (k < n->key)
-        n->left = node_remove(n->left, k);
+        n->left = node_remove(n->left, k, removed, _data);
     else if (k > n->key)
-        n->right = node_remove(n->right, k);
+        n->right = node_remove(n->right, k, removed, _data);
     else {
+        *removed = true;
+        *_data = n->data;
         copy = *n;
 
         node_operators[n->host->inplace].deallocator(n);
@@ -383,35 +387,52 @@ avl_tree_node_t *avl_tree_add(avl_tree_t *t, avl_tree_key_t k) {
     return n;
 }
 
-avl_tree_node_t *avl_tree_add_or_get(avl_tree_t *t, avl_tree_key_t k) {
+avl_tree_node_t *avl_tree_add_or_get(avl_tree_t *t, avl_tree_key_t k,
+                                     bool *_inserted) {
     avl_tree_node_t *n;
     bool inserted = false;
+
     assert(t);
+    assert(_inserted);
 
     t->root = node_insert_or_get(t->root, t->root, t, k, &n, &inserted);
     t->count += inserted;
+
+    *_inserted = inserted;
+
     return n;
 }
 
 void *avl_tree_remove_get_data(avl_tree_t *t, avl_tree_key_t k) {
     avl_tree_node_t *n;
-    void *d;
+    void *d = NULL;
+    bool removed = false;
+
     assert(t);
 
+#if 0
     n = node_get(t->root, k);
     d = n->data;
+#endif
 
-    t->root = node_remove(t->root, k);
-    --t->count;
+    t->root = node_remove(t->root, k, &removed, &d);
+
+    if (removed)
+        --t->count;
 
     return d;
 }
 
 void avl_tree_remove(avl_tree_t *t, avl_tree_key_t k) {
+    void *d;
+    bool removed = false;
+
     assert(t);
 
-    t->root = node_remove(t->root, k);
-    --t->count;
+    t->root = node_remove(t->root, k, &removed, &d);
+
+    if (removed)
+        --t->count;
 }
 
 avl_tree_node_t *avl_tree_node_next(avl_tree_node_t *n) {

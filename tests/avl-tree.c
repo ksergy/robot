@@ -311,6 +311,7 @@ START_TEST(test_avl_tree_add_or_get_ok) {
     avl_tree_t t;
     avl_tree_node_t *atn[5], *n, *r;
     avl_tree_key_t k;
+    bool inserted = false;
 
     init_avl_tree(t, false, 5);
 
@@ -334,37 +335,43 @@ START_TEST(test_avl_tree_add_or_get_ok) {
     r = t.root;
 
     k = 0;
-    n = avl_tree_add_or_get(&t, k);
+    n = avl_tree_add_or_get(&t, k, &inserted);
+    ck_assert_int_eq(inserted, true);
     ck_assert_ptr_eq(n, atn[0]);
     ck_assert_int_eq(t.count, 5);
     ck_assert_ptr_eq(t.root, r);
 
     k = -1;
-    n = avl_tree_add_or_get(&t, k);
+    n = avl_tree_add_or_get(&t, k, &inserted);
+    ck_assert_int_eq(inserted, true);
     ck_assert_ptr_eq(n, atn[1]);
     ck_assert_int_eq(t.count, 5);
     ck_assert_ptr_eq(t.root, r);
 
     k = 1;
-    n = avl_tree_add_or_get(&t, k);
+    n = avl_tree_add_or_get(&t, k, &inserted);
+    ck_assert_int_eq(inserted, true);
     ck_assert_ptr_eq(n, atn[2]);
     ck_assert_int_eq(t.count, 5);
     ck_assert_ptr_eq(t.root, r);
 
     k = 2;
-    n = avl_tree_add_or_get(&t, k);
+    n = avl_tree_add_or_get(&t, k, &inserted);
+    ck_assert_int_eq(inserted, true);
     ck_assert_ptr_eq(n, atn[3]);
     ck_assert_int_eq(t.count, 5);
     ck_assert_ptr_eq(t.root, r);
 
     k = 3;
-    n = avl_tree_add_or_get(&t, k);
+    n = avl_tree_add_or_get(&t, k, &inserted);
+    ck_assert_int_eq(inserted, true);
     ck_assert_ptr_eq(n, atn[4]);
     ck_assert_int_eq(t.count, 5);
     ck_assert_ptr_eq(t.root, r);
 
     k = 4;
-    n = avl_tree_add_or_get(&t, k);
+    n = avl_tree_add_or_get(&t, k, &inserted);
+    ck_assert_int_eq(inserted, true);
     ck_assert_ptr_ne(n, atn[0]);
     ck_assert_ptr_ne(n, atn[1]);
     ck_assert_ptr_ne(n, atn[2]);
