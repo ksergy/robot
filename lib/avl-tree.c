@@ -251,7 +251,8 @@ avl_tree_node_t *node_remove(avl_tree_node_t *n, avl_tree_key_t k,
         node_operators[n->host->inplace].deallocator(n);
 
         if (!copy.right) {
-            copy.left->parent = copy.parent;
+            if (copy.left)
+                copy.left->parent = copy.parent;
             return copy.left;
         }
 
