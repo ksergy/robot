@@ -85,7 +85,7 @@ START_TEST(test_hash_map_node_full_ok) {
     hash_map_node_t *hmn;
     hash_map_node_element_t *el[50], *el_tst;
     hash_map_node_data_t hmnd, *hmnd_tst, *hmnd2;
-    size_t i;
+    ssize_t i;
 
     hash_map_init(&hm, hash_pearson, hash_update_pearson);
 
@@ -133,12 +133,14 @@ START_TEST(test_hash_map_node_full_ok) {
         ck_assert_int_eq(hash_map_node_size(hmn), 50 - i - 1);
     }
 
+    ck_assert_int_eq(hash_map_node_size(hmn), 25);
+
     for (i = 0, el_tst = hash_map_node_begin(hmn);
          i < 25; ++i, el_tst = hash_map_node_next(hmn, el_tst)) {
         ck_assert_ptr_eq(el_tst, el[25 + i]);
 
         hmnd_tst = (hash_map_node_data_t *)hash_map_node_element_get_data(el_tst);
-        hmnd2 = (hash_map_node_data_t *)hash_map_node_element_get_data(el[i]);
+        hmnd2 = (hash_map_node_data_t *)hash_map_node_element_get_data(el[25 + i]);
 
         ck_assert_ptr_eq(hmnd_tst->data, hmnd2->data);
         ck_assert_int_eq(hmnd_tst->size, hmnd2->size);
