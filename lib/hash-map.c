@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <string.h>
 
 void hash_map_init(hash_map_t *hm,
                    hash_function_t hasher,
@@ -148,4 +149,78 @@ hash_map_node_t *hash_map_end(hash_map_t *hm) {
     end = atn_end ? atn_end->data : NULL;
 
     return end;
+}
+
+size_t hash_map_node_size(hash_map_node_t *hmn) {
+    assert(hmn);
+
+    return hmn->data_list.count;
+}
+
+hash_map_node_element_t *hash_map_node_add(hash_map_node_t *hmn,
+                                           hash_map_node_data_t hmnd) {
+    list_element_t *le;
+
+    assert(hmn);
+
+    le = list_append(&hmn->data_list);
+
+    if (!le || !le->data)
+        return NULL;
+
+    memcpy(le->data, &hmnd, sizeof(hmnd));
+    return (hash_map_node_element_t *)le;
+}
+
+void hash_map_node_remove(hash_map_node_t *hmn, hash_map_node_element_t *el) {
+    assert(hmn);
+
+    if (!el)
+        return;
+
+    assert(&hmn->data_list == el->host);
+
+    list_remove_and_advance(&hmn->data_list, (list_element_t *)el);
+}
+
+hash_map_node_element_t *hash_map_node_next(hash_map_node_t *hmn,
+                                            hash_map_node_element_t *el) {
+    assert(hmn);
+
+    if (!el)
+        return;
+
+    assert(&hmn->data_list == el->host);
+
+    return (hash_map_node_element_t *)list_next(&hmn->data_list,
+                                                (list_element_t *)el);
+}
+
+hash_map_node_element_t *hash_map_node_prev(hash_map_node_t *hmn,
+                                            hash_map_node_element_t *el) {
+    assert(hmn);
+
+    if (!el)
+        return;
+
+    assert(&hmn->data_list == el->host);
+
+    return (hash_map_node_element_t *)list_prev(&hmn->data_list,
+                                                (list_element_t *)el);
+}
+
+hash_map_node_element_t *hash_map_node_begin(hash_map_node_t *hmn) {
+    assert(hmn);
+
+    return (hash_map_node_element_t *)list_begin(&hmn->data_list);
+}
+
+hash_map_node_element_t *hash_map_node_end(hash_map_node_t *hmn) {
+    assert(hmn);
+
+    return (hash_map_node_element_t *)list_end(&hmn->data_list);
+}
+
+void *hash_map_node_element_get_data(const hash_map_node_element_t *el) {
+    return (void *)(el ? el->data : NULL);
 }
