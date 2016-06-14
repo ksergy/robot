@@ -5,8 +5,12 @@
  * Multigrid library.
  */
 
-# include "containers.h"
+# include "lib/containers.h"
+# include "lib/set.h"
+# include "lib/avl-tree.h"
+
 # include <stdint.h>
+# include <stdbool.h>
 
 typedef enum division_scheme_axes {
     DS_X_AXIS = 0,
@@ -37,8 +41,10 @@ typedef uint16_t grid_value_t;
 typedef uint64_t grid_level_t;
 typedef uint64_t grid_id_t;
 
+typedef int64_t sgrid_level_t;
+
 struct picture {
-    division_scheme_t dim;
+    picture_dimensions_t dim;
     const grid_value_t *p; /* pic(x, y) = p[x * dim[DS_Y_AXIS] + y],
                             * x = 0 .. dim[DS_X_AXIS]
                             * y = 0 .. dim[DS_Y_AXIS]
@@ -58,18 +64,32 @@ struct grid {
     picture_dimensions_t size;
 
     grid_level_t level;
-    vector_t child; /* [DS_AXES_NUMBER * DS_AXES_NUMBER] */
+    bool should_grid;
+    bool grided;
+    set_t neighbors;    /* set of ids */
 };
 
 struct multigrid {
     picture_t pic;
-    picture_dimensions_t ds;
-    grid_t level_0;
+    division_scheme_t ds;
+    vector_t level_capacity;
+    grid_level_t max_level;
+    avl_tree_t grids; /* grids by id */
+    grid_t *id_0;
 };
 
+/** Initialize multigrid structure.
+ * \param pic picture description
+ * \param ds division scheme
+ * \param max_level maximum level. The first undivided grids level.
+ */
 void multigrid_init(multigrid_t *mg,
-                    picture_t pic, division_scheme_t ds);
-void multigrid_grid(multigrid_t *mg);
+                    picture_t pic,
+                    division_scheme_t ds,
+                    grid_level_t max_level);
 void multigrid_purge(multigrid_t *mg);
+void multigrid_grid(multigrid_t *mg);
+
+list_t grid_id_to_path(multigrid_t *mg, grid_id_t id);
 
 #endif /* _MULTIGRID_H_ */
