@@ -90,6 +90,18 @@ void multigrid_init(multigrid_t *mg,
 void multigrid_purge(multigrid_t *mg);
 void multigrid_grid(multigrid_t *mg);
 
-list_t grid_id_to_path(multigrid_t *mg, grid_id_t id);
+/** Convert grid id to its path
+ * \param mg multigrid descriptor
+ * \param id grid's id
+ * \return \c list_t list with inplace allocation of \c scheme_division_t.
+ *         Each element shows grid position inside it's parent grid.
+ *         The first element shows position at level 1.
+ *         Empty list is returned for zero id.
+ */
+list_t multigrid_id_to_path(multigrid_t *mg, grid_id_t id);
+
+/** Reverse for \c multigrid_id_to_path
+ */
+grid_id_t multigrid_path_to_id(multigrid_t *mg, const list_t *path);
 
 #endif /* _MULTIGRID_H_ */

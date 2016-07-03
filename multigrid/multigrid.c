@@ -4,6 +4,12 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#define WITH_NEIGHBORHOOD       true
+#define WITHOUT_NEIGHBORHOOD    false
+
+#define RECURSIVE               true
+#define NOT_RECURSIVE           false
+
 /************************** types **************************/
 enum pic_pos {
     PP_FROM = 0,
@@ -24,7 +30,7 @@ void grid_init(multigrid_t *host,
                const picture_dimensions_t pic[PP_MAX], pic_val_t v);
 
 static
-void grid_grid(grid_t *g);
+void grid_grid(grid_t *g, bool with_negighborhood);
 
 static
 void grid_setup_neighborhood_children_relations(grid_t *g,
@@ -32,6 +38,14 @@ void grid_setup_neighborhood_children_relations(grid_t *g,
 
 static
 grid_id_t division_scheme_mul(const division_scheme_t *ds);
+
+static
+grid_id_t division_scheme_idx(const division_scheme_t *ds,
+                              const division_scheme_t *pos);
+
+static
+division_scheme_t division_scheme_idx_reverse(const division_scheme_t *ds,
+                                              grid_id_t idx);
 
 static
 grid_t *multigrid_add_grid(multigrid_t *host, grid_id_t id);
@@ -79,6 +93,21 @@ grid_id_t division_scheme_mul(const division_scheme_t *ds) {
     return r;
 }
 
+grid_id_t division_scheme_idx(const division_scheme_t *ds,
+                              const division_scheme_t *pos) {
+    return ds->v[DS_X_AXIS] * pos->v[DS_Y_AXIS] + pos->v[DS_X_AXIS];
+}
+
+division_scheme_t division_scheme_idx_reverse(const division_scheme_t *ds,
+                                              grid_id_t idx) {
+    division_scheme_t pos;
+
+    pos.v[DS_X_AXIS] = idx % ds->v[DS_X_AXIS];
+    pos.v[DS_Y_AXIS] = idx / ds->v[DS_X_AXIS];
+
+    return pos;
+}
+
 pic_val_t picture_value(const picture_t *pic,
                         const picture_dimensions_t pp[PP_MAX]) {
     pic_val_t pv;
@@ -114,7 +143,7 @@ pic_val_t picture_value(const picture_t *pic,
     return pv;
 }
 
-void grid_grid(grid_t *g) {
+void grid_grid(grid_t *g, bool with_negighborhood) {
     grid_id_t id_segment = g->id + 1;
     grid_level_t l = g->level + 1;
     multigrid_t *host = g->host;
@@ -133,28 +162,30 @@ void grid_grid(grid_t *g) {
     if (!g->should_grid)
         return;
 
-    g->grided = true;
-    for (id_offset = 0, pos.v[DS_X_AXIS] = 0;
-         pos.v[DS_X_AXIS] < host->ds.v[DS_X_AXIS];
-         ++pos.v[DS_X_AXIS]) {
-        for (pos.v[DS_Y_AXIS] = 0; pos.v[DS_Y_AXIS] < host->ds.v[DS_Y_AXIS];
-             id_offset += lcap, ++pos.v[DS_Y_AXIS]) {
-            picture_divide(pic, &host->ds, &pos, child_pic);
-            child_pv = picture_value(&host->pic, child_pic);
 
-            grid_id_t id = id_segment + id_offset;
+    if (l < g->host->max_level) {
+        g->grided = true;
+        for (id_offset = 0, pos.v[DS_X_AXIS] = 0;
+             pos.v[DS_X_AXIS] < host->ds.v[DS_X_AXIS];
+             ++pos.v[DS_X_AXIS]) {
+            for (pos.v[DS_Y_AXIS] = 0; pos.v[DS_Y_AXIS] < host->ds.v[DS_Y_AXIS];
+                 /*id_offset += lcap,*/ ++pos.v[DS_Y_AXIS]) {
+                picture_divide(pic, &host->ds, &pos, child_pic);
+                child_pv = picture_value(&host->pic, child_pic);
 
-            child = multigrid_add_grid(host, id);
-            grid_init(host, child, id, l, g, &pos, child_pic, child_pv);
+                id_offset = lcap * division_scheme_idx(&g->host->ds, &pos);
+                grid_id_t id = id_segment + id_offset;
 
-            grid_grid(child);
+                child = multigrid_add_grid(host, id);
+                grid_init(host, child, id, l, g, &pos, child_pic, child_pv);
+
+                grid_grid(child, with_negighborhood);
+            }
         }
     }
 
-    /* TODO make children relations setup selectable with a flag
-     * for ceratain situations
-     */
-    grid_setup_neighborhood_children_relations(g, true);
+    if (with_negighborhood)
+        grid_setup_neighborhood_children_relations(g, RECURSIVE);
 }
 
 /************************** API **************************/
@@ -226,10 +257,67 @@ void multigrid_purge(multigrid_t *mg) {
 void multigrid_grid(multigrid_t *mg) {
     assert(mg);
 
-    grid_grid(mg->id_0);
+    grid_grid(mg->id_0, WITH_NEIGHBORHOOD);
 }
 
-list_t grid_id_to_path(multigrid_t *mg, grid_id_t id) {
-    /* TODO */
+list_t multigrid_id_to_path(multigrid_t *mg, grid_id_t id) {
+    /* Path creation rules:
+     * x,y>x,y>x,y
+     *
+     * x,y --- current level grid position in division scheme
+     * >   --- level delimiter
+     */
+
+    grid_level_t l = 0;
+    grid_id_t idx;
+    division_scheme_t pos;
+    list_t path;
+    list_element_t *el;
+    grid_id_t lcap;
+
+    assert(mg);
+
+    list_init(&path, true, sizeof(division_scheme_t));
+
+    while (id > 0) {
+        --id;
+        ++l;
+
+        lcap = *(grid_id_t *)vector_get(&mg->level_capacity, l);
+        idx = id / lcap;
+
+        el = list_append(&path);
+        *(division_scheme_t *)el->data = division_scheme_idx_reverse(
+            &mg->ds,
+            idx
+        );
+
+        id -= idx * lcap;
+    }
+
+    return path;
 }
 
+grid_id_t multigrid_path_to_id(multigrid_t *mg, const list_t *path) {
+    grid_id_t id = 0;
+    grid_level_t l = 0;
+    division_scheme_t *pos;
+    list_element_t *next;
+    grid_id_t lcap;
+
+    assert(mg);
+
+    if (!path)
+        return 0;
+
+    for (next = list_begin(path); next; next = list_next(path, next)) {
+        ++l;
+        ++id;
+        pos = next->data;
+
+        lcap = *(grid_id_t *)vector_get(&mg->level_capacity, l);
+        id += division_scheme_idx(&mg->ds, pos) * lcap;
+    }
+
+    return id;
+}
