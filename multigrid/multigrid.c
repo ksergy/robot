@@ -143,6 +143,22 @@ pic_val_t picture_value(const picture_t *pic,
     return pv;
 }
 
+void picture_divide(const picture_dimensions_t pic[PP_MAX],
+                    const division_scheme_t *ds,
+                    const division_scheme_t *pos,
+                    picture_dimensions_t ret[PP_MAX]) {
+    picture_dimensions_t offset;
+    picture_dimensions_t size;
+    size_t idx;
+
+    assert(ds && pos);
+
+    for (idx = 0; idx < DS_AXES_NUMBER; ++idx) {
+        size.v[idx] = pic[PP_SIZE].v[idx] / ds->v[idx];
+        offset.v[idx] = pic[PP_FROM].v[idx] + size.v[idx] * pos->v[idx];
+    }
+}
+
 void grid_grid(grid_t *g, bool with_negighborhood) {
     grid_id_t id_segment = g->id + 1;
     grid_level_t l = g->level + 1;
@@ -186,6 +202,18 @@ void grid_grid(grid_t *g, bool with_negighborhood) {
 
     if (with_negighborhood)
         grid_setup_neighborhood_children_relations(g, RECURSIVE);
+}
+
+grid_t *multigrid_add_grid(multigrid_t *host, grid_id_t id) {
+    avl_tree_node_t *atn;
+    bool inserted = false;
+    assert(host);
+
+    atn = avl_tree_add_or_get(&host->grids, id, &inserted);
+
+    assert((atn != NULL) && inserted);
+
+    return atn->data;
 }
 
 /************************** API **************************/
