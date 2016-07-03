@@ -95,15 +95,15 @@ grid_id_t division_scheme_mul(const division_scheme_t *ds) {
 
 grid_id_t division_scheme_idx(const division_scheme_t *ds,
                               const division_scheme_t *pos) {
-    return ds->v[DS_X_AXIS] * pos->v[DS_Y_AXIS] + pos->v[DS_X_AXIS];
+    return X_PTR(ds) * Y_PTR(pos) + X_PTR(pos);
 }
 
 division_scheme_t division_scheme_idx_reverse(const division_scheme_t *ds,
                                               grid_id_t idx) {
     division_scheme_t pos;
 
-    pos.v[DS_X_AXIS] = idx % ds->v[DS_X_AXIS];
-    pos.v[DS_Y_AXIS] = idx / ds->v[DS_X_AXIS];
+    X(pos) = idx % X_PTR(ds);
+    Y(pos) = idx / X_PTR(ds);
 
     return pos;
 }
@@ -114,31 +114,31 @@ pic_val_t picture_value(const picture_t *pic,
     unsigned int x, y;
     grid_value_t original;
 
-    x = pp[PP_FROM].v[DS_X_AXIS];
-    y = pp[PP_FROM].v[DS_Y_AXIS];
+    x = X(pp[PP_FROM]);
+    y = Y(pp[PP_FROM]);
 
-    original = pic->p[x * pic->dim.v[DS_Y_AXIS] + y];
+    original = pic->p[x * Y(pic->dim) + y];
 
     for (pv.v = 0, pv.should_grid = false;
          !pv.should_grid &&
-          x < pp[PP_FROM].v[DS_X_AXIS] + pp[PP_SIZE].v[DS_X_AXIS];
+          x < X(pp[PP_FROM]) + X(pp[PP_SIZE]);
          ++x)
-        for (y = pp[PP_FROM].v[DS_Y_AXIS];
-             y < pp[PP_FROM].v[DS_Y_AXIS] + pp[PP_SIZE].v[DS_Y_AXIS];
+        for (y = Y(pp[PP_FROM]);
+             y < Y(pp[PP_FROM]) + Y(pp[PP_SIZE]);
              ++y) {
-            pv.v += pic->p[x * pic->dim.v[DS_Y_AXIS] + y];
-            if (original ^ pic->p[x * pic->dim.v[DS_Y_AXIS] + y])
+            pv.v += pic->p[x * Y(pic->dim) + y];
+            if (original ^ pic->p[x * Y(pic->dim) + y])
                 pv.should_grid = true;
         }
 
-    for (; x < pp[PP_FROM].v[DS_X_AXIS] + pp[PP_SIZE].v[DS_X_AXIS];
+    for (; x < X(pp[PP_FROM]) + X(pp[PP_SIZE]);
          ++x)
-        for (y = pp[PP_FROM].v[DS_Y_AXIS];
-             y < pp[PP_FROM].v[DS_Y_AXIS] + pp[PP_SIZE].v[DS_Y_AXIS];
+        for (y = Y(pp[PP_FROM]);
+             y < Y(pp[PP_FROM]) + Y(pp[PP_SIZE]);
              ++y)
-            pv.v += pic->p[x * pic->dim.v[DS_Y_AXIS] + y];
+            pv.v += pic->p[x * Y(pic->dim) + y];
 
-    pv.v /= pp[PP_SIZE].v[DS_Y_AXIS] * pp[PP_SIZE].v[DS_X_AXIS];
+    pv.v /= Y(pp[PP_SIZE]) * X(pp[PP_SIZE]);
 
     return pv;
 }
@@ -165,11 +165,11 @@ void grid_grid(grid_t *g, bool with_negighborhood) {
 
     if (l < g->host->max_level) {
         g->grided = true;
-        for (id_offset = 0, pos.v[DS_X_AXIS] = 0;
-             pos.v[DS_X_AXIS] < host->ds.v[DS_X_AXIS];
-             ++pos.v[DS_X_AXIS]) {
-            for (pos.v[DS_Y_AXIS] = 0; pos.v[DS_Y_AXIS] < host->ds.v[DS_Y_AXIS];
-                 /*id_offset += lcap,*/ ++pos.v[DS_Y_AXIS]) {
+        for (id_offset = 0, X(pos) = 0;
+             X(pos) < X(host->ds);
+             ++X(pos)) {
+            for (Y(pos) = 0; Y(pos) < Y(host->ds);
+                 /*id_offset += lcap,*/ ++Y(pos)) {
                 picture_divide(pic, &host->ds, &pos, child_pic);
                 child_pv = picture_value(&host->pic, child_pic);
 

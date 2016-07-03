@@ -35,6 +35,12 @@ typedef struct division_scheme {
     unsigned int v[DS_AXES_NUMBER];
 } division_scheme_t;
 
+# define COORD(name, a)     (a).v[DS_##name##_AXIS]
+# define X(a)               COORD(X, a)
+# define Y(a)               COORD(Y, a)
+# define X_PTR(ptr)         X(*(division_scheme_t *)ptr)
+# define Y_PTR(ptr)         Y(*(division_scheme_t *)ptr)
+
 typedef division_scheme_t picture_dimensions_t;
 
 typedef uint16_t grid_value_t;
