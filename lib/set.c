@@ -4,6 +4,23 @@
 #include <stdbool.h>
 #include <assert.h>
 
+static
+set_iterator_t fill_iterator(avl_tree_node_t *atn) {
+    set_iterator_t it;
+
+    if (atn) {
+        it.it = atn;
+        it.k = atn->key;
+        it.count = *(unsigned int *)atn->data;
+    } else {
+        it.it = NULL;
+        it.count = 0;
+        it.k = 0;
+    }
+
+    return it;
+}
+
 void set_init(set_t *s) {
     assert(s);
 
@@ -79,35 +96,53 @@ unsigned int set_remove(set_t *s, set_key_t k) {
     return next_value;
 }
 
-void *set_begin(set_t *s) {
+set_iterator_t set_begin(set_t *s) {
+    avl_tree_node_t *atn;
+
     assert(s);
 
-    return avl_tree_node_min(s->tree.root);
+    atn = avl_tree_node_min(s->tree.root);
+
+    return fill_iterator(atn);
 }
 
-void *set_end(set_t *s) {
+set_iterator_t set_end(set_t *s) {
+    avl_tree_node_t *atn;
+
     assert(s);
 
-    return avl_tree_node_max(s->tree.root);
+    atn = avl_tree_node_max(s->tree.root);
+
+    return fill_iterator(atn);
 }
 
-void *set_next(set_t *s, void *el) {
+set_iterator_t set_next(set_t *s, avl_tree_node_t *el) {
+    avl_tree_node_t *atn;
+
     assert(s);
 
-    return avl_tree_node_next(el);
+    atn = avl_tree_node_next(el);
+
+    return fill_iterator(atn);
 }
 
-void *set_prev(set_t *s, void *el) {
+set_iterator_t set_prev(set_t *s, avl_tree_node_t *el) {
+    avl_tree_node_t *atn;
+
     assert(s);
 
-    return avl_tree_node_prev(el);
+    atn = avl_tree_node_prev(el);
+
+
+    return fill_iterator(atn);
 }
 
-set_key_t set_get_data(void *el) {
-    assert(el);
-    return ((avl_tree_node_t *)el)->key;
+unsigned int set_data_count(avl_tree_node_t *el) {
+    return el ? *(unsigned int *)el->data : 0;
 }
 
-unsigned int set_data_count(void *el) {
-    return el ? *(unsigned int *)((avl_tree_node_t *)el)->data : 0;
+set_key_t set_get_data(avl_tree_node_t *el) {
+    return el ? el->key : 0;
 }
+
+

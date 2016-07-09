@@ -16,7 +16,7 @@ END_TEST
 START_TEST(test_set_add_remove_begin_end_next_prev_get_ok) {
     set_t s;
     ssize_t i, j;
-    void *it;
+    set_iterator_t it;
 
     set_init(&s);
 
@@ -42,16 +42,20 @@ START_TEST(test_set_add_remove_begin_end_next_prev_get_ok) {
 
     ck_assert_int_eq(set_size(&s), 50);
 
-    for (it = set_begin(&s), i = 0; it; it = set_next(&s, it), ++i) {
-        ck_assert_int_eq(set_get_data(it), i);
-        ck_assert_int_eq(set_data_count(it), 1);
+    for (it = set_begin(&s), i = 0; it.it; it = set_next(&s, it.it), ++i) {
+        ck_assert_int_eq(set_get_data(it.it), i);
+        ck_assert_int_eq(set_get_data(it.it), it.k);
+        ck_assert_int_eq(set_data_count(it.it), 1);
+        ck_assert_int_eq(set_data_count(it.it), it.count);
     }
 
     ck_assert_int_eq(set_size(&s), 50);
 
-    for (it = set_end(&s), i = 49; it; it = set_prev(&s, it), --i) {
-        ck_assert_int_eq(set_get_data(it), i);
-        ck_assert_int_eq(set_data_count(it), 1);
+    for (it = set_end(&s), i = 49; it.it; it = set_prev(&s, it.it), --i) {
+        ck_assert_int_eq(set_get_data(it.it), i);
+        ck_assert_int_eq(set_get_data(it.it), it.k);
+        ck_assert_int_eq(set_data_count(it.it), 1);
+        ck_assert_int_eq(set_data_count(it.it), it.count);
     }
 
     ck_assert_int_eq(set_size(&s), 50);

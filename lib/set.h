@@ -12,6 +12,12 @@ typedef struct set {
 
 typedef avl_tree_key_t set_key_t;
 
+typedef struct set_iterator {
+    void *it;
+    unsigned int count;
+    set_key_t k;
+} set_iterator_t;
+
 void set_init(set_t *s);
 void set_purge(set_t *s);
 
@@ -20,12 +26,12 @@ unsigned int set_add(set_t *s, set_key_t k);
 unsigned int set_count(set_t *s, set_key_t k);
 unsigned int set_remove(set_t *s, set_key_t k);
 
-void *set_begin(set_t *s);
-void *set_end(set_t *s);
-void *set_next(set_t *s, void *el);
-void *set_prev(set_t *s, void *el);
+set_iterator_t set_begin(set_t *s);
+set_iterator_t set_end(set_t *s);
+set_iterator_t set_next(set_t *s, avl_tree_node_t *el);
+set_iterator_t set_prev(set_t *s, avl_tree_node_t *el);
 
-set_key_t set_get_data(void *el);
-unsigned int set_data_count(void *el);
+set_key_t set_get_data(avl_tree_node_t *el);
+unsigned int set_data_count(avl_tree_node_t *el);
 
 #endif /* _SET_H_ */
