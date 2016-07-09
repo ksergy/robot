@@ -57,6 +57,27 @@ struct picture {
                             */
 };
 
+typedef enum grid_edge {
+    GE_N        = 0x00,
+    GE_NE       = 0x01,
+    GE_E        = 0x02,
+    GE_SE       = 0x03,
+
+    GE_HALF     = 0x04,
+
+    GE_S        = GE_HALF + 0x00,
+    GE_SW       = GE_HALF + 0x01,
+    GE_W        = GE_HALF + 0x02,
+    GE_NW       = GE_HALF + 0x03,
+
+    /* constants */
+    GE_MIN      = GE_N,
+    GE_MAX      = GE_NW,
+    GE_COUNT    = GE_HALF * 2
+} grid_edge_t;
+
+# define grid_edge_inverse(e) ((e + GE_HALF) & GE_MAX)
+
 struct grid {
     multigrid_t *host;
 
@@ -72,7 +93,7 @@ struct grid {
     grid_level_t level;
     bool should_grid;
     bool grided;
-    set_t neighbors;    /* set of ids */
+    set_t neighbors[GE_MAX];    /* set of ids */
 };
 
 struct multigrid {
