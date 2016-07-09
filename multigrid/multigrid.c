@@ -43,7 +43,7 @@ static inline
 void grid_child_id(grid_t *g, grid_id_t idx);
 
 static
-void grid_set_neighbourhood(grid_t *grid, grid_t *with);
+void grid_set_neighbourhood(grid_t *from, grid_t *to, grid_edge_t e);
 
 static
 grid_id_t division_scheme_mul(const division_scheme_t *ds);
@@ -192,6 +192,7 @@ void grid_grid(grid_t *g, bool with_negighborhood) {
     if (!g->should_grid)
         return;
 
+    /* TODO: rethink! */
     if (l < g->host->max_level) {
         g->grided = true;
         for (id_offset = 0, X(pos) = 0;
@@ -231,10 +232,11 @@ void grid_child_id(grid_t *g, grid_id_t idx) {
 void grid_setup_neighborhood_children_relations(grid_t *g, bool recursive) {
     assert(g);
 
-    division_scheme_t pos;
-    grid_id_t child_idx;
-    grid_id_t child_id;
-    grid_t *child;
+    division_scheme_t child_pos, neigh_pos;
+    grid_id_t neigh_idx, child_idx;
+    grid_id_t child_id, neigh_id;
+    grid_t *child, *neigh;
+    grid_edge_t e;
 
     if (!g->grided)
         return;
@@ -244,7 +246,78 @@ void grid_setup_neighborhood_children_relations(grid_t *g, bool recursive) {
      * g's children do not have any neighbours set
      */
 
+#define init_child()                                            \
+do {                                                            \
+    child_idx = division_scheme_idx(&g->host->ds, child_pos);   \
+    child_id = grid_child_id(g, child_idx);                     \
+    child = multigrid_get_grid(g->host, child_id);              \
+} while(0)
+
+#define neighbours(edge)                                        \
+do {                                                            \
+    e = edge;                                                   \
+    neigh_idx = division_scheme_idx(&g->host->ds, &neigh_pos);  \
+    neigh_id = grid_child_id(g, neigh_idx);                     \
+    neigh = multigrid_get_grid(g->host, neigh_id);              \
+    grid_set_neighbourhood(child, neigh, e);                    \
+} while(0)
+
     /* 1. set up neighbourhood inside division scheme */
+    for (Y(child_pos) = 0; Y(child_pos) < Y(g->host->ds) - 1; ++ Y(child_pos)) {
+        X(child_pos) = Y(child_pos) = 0;
+
+        init_child();
+
+        neigh_pos = child_pos;
+
+        ++ X(neigh_pos);
+        neighbours(GE_E);
+
+        ++ Y(neigh_pos);
+        neighbours(GE_SE);
+
+        -- X(neigh_pos);
+        neighbours(GE_S);
+
+        for (X(child_pos) = 1; X(child_pos) < X(g->host->ds) - 1; ++ X(child_pos)) {
+            init_child();
+
+            neigh_pos = child_pos;
+
+            ++ X(neigh_pos);
+            neighbours(GE_E);
+
+            ++ Y(neigh_pos);
+            neighbours(GE_SE);
+
+            -- X(neigh_pos);
+            neighbours(GE_S);
+
+            -- X(neigh_pos);
+            neighbours(GE_SW);
+        }   /* for (X(pos) = 1; X(pos) < X(g->host->ds) - 1; ++ X(pos)) */
+
+        init_child();
+
+        neigh_pos = child_pos;
+
+        ++Y(neigh_pos);
+        e = GE_S;
+        neighbours(GE_S);
+    }   /* for (Y(child_pos) = 0; Y(child_pos) < Y(g->host->ds) - 1; ++ Y(child_pos)) */
+
+    for (X(child_pos) = 0; X(child_pos) < X(g->host->ds) - 1; ++ X(child_pos)) {
+        init_child();
+
+        neigh_pos = child_pos;
+
+        ++ X(neigh_pos);
+        e = GE_E;
+        neighbours(GE_E);
+    }   /* for (X(child_pos) = 0; X(child_pos) < X(g->host->ds) - 1; ++ X(child_pos)) */
+#undef neighbours
+#undef init_child
+
     /* 2. inherit g's neighbours by children and set up neighbourhood */
 
     /* TODO */
@@ -253,8 +326,8 @@ void grid_setup_neighborhood_children_relations(grid_t *g, bool recursive) {
     /* 1. set up neighbors for edge childs */
     /* move along upper border - y = 0, x = 0..x */
     for (X(pos) = Y(pos) = 0; X(pos) < X(g->host->ds); ++X(pos)) {
-        child_idx = division_scheme_idx(&g->host->ds, &pos);
-        child_id = grid_child_id(g, child_idx);
+        neigh_idx = division_scheme_idx(&g->host->ds, &pos);
+        child_id = grid_child_id(g, neigh_idx);
 
         child = multigrid_get_grid(g->host, child_id);
 
