@@ -225,6 +225,13 @@ grid_id_t grid_child_id(grid_t *g, grid_id_t idx) {
     return id;
 }
 
+void grid_set_neighbourhood(grid_t *from, grid_t *to, grid_edge_t e) {
+    assert(from && to);
+
+    set_add_single(&from->neighbors[e], to->id);
+    set_add_single(&to->neighbors[grid_edge_inverse(e)], from->id);
+}
+
 void grid_setup_neighborhood_children_relations(grid_t *g, bool recursive) {
     assert(g);
 
@@ -439,6 +446,7 @@ do {                                                                    \
 grid_t *multigrid_add_grid(multigrid_t *host, grid_id_t id) {
     avl_tree_node_t *atn;
     bool inserted = false;
+
     assert(host);
 
     atn = avl_tree_add_or_get(&host->grids, id, &inserted);
@@ -446,6 +454,16 @@ grid_t *multigrid_add_grid(multigrid_t *host, grid_id_t id) {
     assert((atn != NULL) && inserted);
 
     return atn->data;
+}
+
+grid_t *multigrid_get_grid(multigrid_t *host, grid_id_t id) {
+    avl_tree_node_t *atn;
+
+    assert(host);
+
+    atn = avl_tree_get(&host->grids, id);
+
+    return atn ? atn->data : NULL;
 }
 
 /************************** API **************************/

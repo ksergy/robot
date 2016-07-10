@@ -143,8 +143,6 @@ do {                                            \
     }                                   \
 }
 
-
-
 struct grid {
     multigrid_t *host;
 
