@@ -1,5 +1,6 @@
 #include "multigrid.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -35,9 +36,6 @@ void grid_grid(grid_t *g, bool with_negighborhood);
 static
 void grid_setup_neighborhood_children_relations(grid_t *g,
                                                 bool recursive);
-
-static inline
-bool grid_check_neighbourhood(grid_t *g, grid_t *neighbour, enum edge edge);
 
 static inline
 grid_id_t grid_child_id(grid_t *g, grid_id_t idx);
@@ -161,29 +159,27 @@ void picture_divide(const picture_dimensions_t pic[PP_MAX],
                     const division_scheme_t *ds,
                     const division_scheme_t *pos,
                     picture_dimensions_t ret[PP_MAX]) {
-    picture_dimensions_t offset;
-    picture_dimensions_t size;
     size_t idx;
 
     assert(ds && pos);
 
     for (idx = 0; idx < DS_AXES_NUMBER; ++idx) {
-        size.v[idx] = pic[PP_SIZE].v[idx] / ds->v[idx];
-        offset.v[idx] = pic[PP_FROM].v[idx] + size.v[idx] * pos->v[idx];
+        ret[PP_SIZE].v[idx] = pic[PP_SIZE].v[idx] / ds->v[idx];
+        ret[PP_FROM].v[idx] = pic[PP_FROM].v[idx] + ret[PP_SIZE].v[idx] * pos->v[idx];
     }
 }
 
 void grid_grid(grid_t *g, bool with_negighborhood) {
-    grid_id_t id_segment = g->id + 1;
     grid_level_t l = g->level + 1;
     multigrid_t *host = g->host;
-    grid_id_t lcap = *(grid_id_t *)vector_get(&host->level_capacity, l);
+    /* grid_id_t id_segment = g->id + 1;
+    grid_id_t lcap = *(grid_id_t *)vector_get(&host->level_capacity, l); */
     picture_dimensions_t pic[PP_MAX] = {
         [PP_FROM] = g->from,
         [PP_SIZE] = g->size
     };
 
-    grid_id_t id_offset;
+    /* grid_id_t id_offset; */
     picture_dimensions_t child_pic[PP_MAX];
     division_scheme_t pos;
     grid_t *child;
@@ -195,7 +191,7 @@ void grid_grid(grid_t *g, bool with_negighborhood) {
     /* TODO: rethink! */
     if (l < g->host->max_level) {
         g->grided = true;
-        for (id_offset = 0, X(pos) = 0;
+        for (/* id_offset = 0, */ X(pos) = 0;
              X(pos) < X(host->ds);
              ++X(pos)) {
             for (Y(pos) = 0; Y(pos) < Y(host->ds);
@@ -534,7 +530,6 @@ list_t multigrid_id_to_path(multigrid_t *mg, grid_id_t id) {
 
     grid_level_t l = 0;
     grid_id_t idx;
-    division_scheme_t pos;
     list_t path;
     list_element_t *el;
     grid_id_t lcap;
@@ -574,7 +569,7 @@ grid_id_t multigrid_path_to_id(multigrid_t *mg, const list_t *path) {
     if (!path)
         return 0;
 
-    for (next = list_begin(path); next; next = list_next(path, next)) {
+    for (next = list_begin((list_t *)path); next; next = list_next((list_t *)path, next)) {
         ++l;
         ++id;
         pos = next->data;
