@@ -35,11 +35,12 @@ typedef struct division_scheme {
     unsigned int v[DS_AXES_NUMBER];
 } division_scheme_t;
 
-# define COORD(name, a)     (a).v[DS_##name##_AXIS]
+# define COORD_NAME(name)   DS_##name##_AXIS
+# define COORD(name, a)     a.v[COORD_NAME(name)]
 # define X(a)               COORD(X, a)
 # define Y(a)               COORD(Y, a)
-# define X_PTR(ptr)         X(*(division_scheme_t *)ptr)
-# define Y_PTR(ptr)         Y(*(division_scheme_t *)ptr)
+# define X_PTR(ptr)         X((*(division_scheme_t *)ptr))
+# define Y_PTR(ptr)         Y((*(division_scheme_t *)ptr))
 
 typedef division_scheme_t picture_dimensions_t;
 
@@ -76,7 +77,73 @@ typedef enum grid_edge {
     GE_COUNT    = GE_HALF * 2
 } grid_edge_t;
 
-# define grid_edge_inverse(e) ((e + GE_HALF) & GE_MAX)
+# define grid_edge_inverse_val(e)           e##_INVERSE
+# define GE_N_INVERSE                       GE_S
+# define GE_S_INVERSE                       GE_N
+# define GE_W_INVERSE                       GE_E
+# define GE_E_INVERSE                       GE_W
+
+# define grid_edge_inverse(e)               ((e + GE_HALF) & GE_MAX)
+# define grid_edge_pos_coord(e, pos)        e##_COORD(pos)
+# define grid_edge_other_coord(e, pos)      e##_OTHER_COORD(pos)
+
+# define GE_N_COORD                         X
+# define GE_S_COORD                         X
+# define GE_W_COORD                         Y
+# define GE_E_COORD                         Y
+
+# define GE_N_OTHER_COORD                   Y
+# define GE_S_OTHER_COORD                   Y
+# define GE_W_OTHER_COORD                   X
+# define GE_E_OTHER_COORD                   X
+
+# define grid_edge_coord_val(e, pos)        e##_COORD_VAL(pos)
+# define GE_N_COORD_VAL(pos)                0
+# define GE_S_COORD_VAL(pos)                Y(pos)
+# define GE_E_COORD_VAL(pos)                X(pos)
+# define GE_W_COORD_VAL(pos)                0
+
+# define grid_edge_other_coord_val(e, pos)  e##_OTHER_COORD_VAL(pos)
+# define GE_N_OTHER_COORD_VAL(pos)          Y(pos)
+# define GE_S_OTHER_COORD_VAL(pos)          0
+# define GE_E_OTHER_COORD_VAL(pos)          X(pos)
+# define GE_W_OTHER_COORD_VAL(pos)          0
+
+# define grid_corner_pos(e, pos, ds)            \
+do {                                            \
+    division_scheme_t tmp = e##_CORNER_POS(ds); \
+    pos = tmp;                                  \
+} while (0)
+# define GE_NE_CORNER_POS(ds)           \
+{                                       \
+    .v = {                              \
+        [COORD_NAME(X)] = X(ds) - 1,    \
+        [COORD_NAME(Y)] = 0             \
+    }                                   \
+}
+# define GE_SE_CORNER_POS(ds)           \
+{                                       \
+    .v = {                              \
+        [COORD_NAME(X)] = X(ds) - 1,    \
+        [COORD_NAME(Y)] = Y(ds) - 1     \
+    }                                   \
+}
+# define GE_NW_CORNER_POS(ds)           \
+{                                       \
+    .v = {                              \
+        [COORD_NAME(X)] = 0,            \
+        [COORD_NAME(Y)] = 0             \
+    }                                   \
+}
+# define GE_SW_CORNER_POS(ds)           \
+{                                       \
+    .v = {                              \
+        [COORD_NAME(X)] = 0,            \
+        [COORD_NAME(Y)] = Y(ds) - 1     \
+    }                                   \
+}
+
+
 
 struct grid {
     multigrid_t *host;
@@ -93,7 +160,7 @@ struct grid {
     grid_level_t level;
     bool should_grid;
     bool grided;
-    set_t neighbors[GE_MAX];    /* set of ids */
+    set_t neighbors[GE_COUNT];  /* set of ids */
 };
 
 struct multigrid {
