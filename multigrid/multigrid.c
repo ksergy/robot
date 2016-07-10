@@ -188,7 +188,7 @@ void grid_grid(grid_t *g, bool with_negighborhood) {
     if (!g->should_grid)
         return;
 
-    /* TODO: rethink! */
+    /* TODO: rethink with grid neighbourhood setup employment! */
     if (l < g->host->max_level) {
         g->grided = true;
         for (/* id_offset = 0, */ X(pos) = 0;
