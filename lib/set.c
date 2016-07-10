@@ -11,7 +11,7 @@ set_iterator_t fill_iterator(avl_tree_node_t *atn) {
     if (atn) {
         it.it = atn;
         it.k = atn->key;
-        it.count = *(unsigned int *)atn->data;
+        it.count = *(set_counter_t *)atn->data;
     } else {
         it.it = NULL;
         it.count = 0;
@@ -24,7 +24,7 @@ set_iterator_t fill_iterator(avl_tree_node_t *atn) {
 void set_init(set_t *s) {
     assert(s);
 
-    avl_tree_init(&s->tree, true, sizeof(unsigned int));
+    avl_tree_init(&s->tree, true, sizeof(set_counter_t));
 }
 
 void set_purge(set_t *s) {
@@ -39,11 +39,11 @@ size_t set_size(set_t *s) {
     return s->tree.count;
 }
 
-unsigned int set_add(set_t *s, set_key_t k) {
+set_counter_t set_add(set_t *s, set_key_t k) {
     bool inserted = false;
     avl_tree_node_t *atn;
-    unsigned int *count;
-    unsigned int prev_value;
+    set_counter_t *count;
+    set_counter_t prev_value;
 
     assert(s);
 
@@ -57,23 +57,38 @@ unsigned int set_add(set_t *s, set_key_t k) {
     return prev_value;
 }
 
-unsigned int set_count(set_t *s, set_key_t k) {
+#define SINGLE 1
+set_counter_t set_add_single(set_t *s, set_key_t k) {
+    bool inserted = false;
     avl_tree_node_t *atn;
-    unsigned int count;
+
+    assert(s);
+
+    atn = avl_tree_add_or_get(&s->tree, k, &inserted);
+
+    *(set_counter_t *)atn->data = SINGLE;
+
+    return SINGLE;
+}
+#undef SINGLE
+
+set_counter_t set_count(set_t *s, set_key_t k) {
+    avl_tree_node_t *atn;
+    set_counter_t count;
 
     assert(s);
 
     atn = avl_tree_get(&s->tree, k);
 
-    count = atn ? *(unsigned int *)atn->data : 0;
+    count = atn ? *(set_counter_t *)atn->data : 0;
 
     return count;
 }
 
-unsigned int set_remove(set_t *s, set_key_t k) {
+set_counter_t set_remove(set_t *s, set_key_t k) {
     avl_tree_node_t *atn;
-    unsigned int *count;
-    unsigned int next_value;
+    set_counter_t *count;
+    set_counter_t next_value;
 
     assert(s);
 
@@ -137,8 +152,8 @@ set_iterator_t set_prev(set_t *s, avl_tree_node_t *el) {
     return fill_iterator(atn);
 }
 
-unsigned int set_data_count(avl_tree_node_t *el) {
-    return el ? *(unsigned int *)el->data : 0;
+set_counter_t set_data_count(avl_tree_node_t *el) {
+    return el ? *(set_counter_t *)el->data : 0;
 }
 
 set_key_t set_get_data(avl_tree_node_t *el) {
