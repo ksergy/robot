@@ -78,6 +78,7 @@ void *vector_prev(vector_t *v, void *d);
 
 /**** list operations ****/
 void list_init(list_t *l, bool inplace, size_t size);
+size_t list_size(const list_t *l);
 list_element_t *list_prepend(list_t *l);
 list_element_t *list_append(list_t *l);
 list_element_t *list_add_after(list_t *l, list_element_t *el);

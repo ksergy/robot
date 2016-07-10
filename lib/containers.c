@@ -323,6 +323,11 @@ void list_init(list_t *l, bool inplace, size_t size) {
     l->count = 0;
 }
 
+size_t list_size(const list_t *l) {
+    assert(l);
+    return l->count;
+}
+
 list_element_t *list_prepend(list_t *l) {
     list_element_t *el;
 
