@@ -303,11 +303,11 @@ static const struct {
 } list_el_alloc_dealloc[2] = {
     [true]  = {
         .allocator      = alloc_lel_inplace,
-        .deallocator    = free
+        .deallocator    = (list_el_deallocator)free
     },
     [false] = {
         .allocator      = alloc_lel_simple,
-        .deallocator    = free
+        .deallocator    = (list_el_deallocator)free
     }
 };
 

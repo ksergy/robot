@@ -20,11 +20,11 @@ static const struct {
 } node_operators[2] = {
     [false] = {
         .allocator      = node_simple_allocator,
-        .deallocator    = free
+        .deallocator    = (node_deallocator)free
     },
     [true] = {
         .allocator      = node_inplace_allocator,
-        .deallocator    = free
+        .deallocator    = (node_deallocator)free
     }
 };
 
@@ -78,10 +78,8 @@ void node_fix_height(avl_tree_node_t *n) {
 
 static inline
 avl_tree_node_t *node_rotate_left(avl_tree_node_t *a) {
-    avl_tree_node_t *L = a->left,
-                    *b = a->right,
-                    *C = b->left,
-                    *R = b->right;
+    avl_tree_node_t *b = a->right,
+                    *C = b->left;
 
     b->parent = a->parent;
     a->parent = b;
@@ -101,9 +99,7 @@ avl_tree_node_t *node_rotate_left(avl_tree_node_t *a) {
 static inline
 avl_tree_node_t *node_rotate_right(avl_tree_node_t *a) {
     avl_tree_node_t *b = a->left,
-                    *L = b->left,
-                    *C = b->right,
-                    *R = a->right;
+                    *C = b->right;
 
     b->parent = a->parent;
     a->parent = b;
@@ -411,7 +407,6 @@ avl_tree_node_t *avl_tree_add_or_get(avl_tree_t *t, avl_tree_key_t k,
 }
 
 void *avl_tree_remove_get_data(avl_tree_t *t, avl_tree_key_t k) {
-    avl_tree_node_t *n;
     void *d = NULL;
     bool removed = false;
 

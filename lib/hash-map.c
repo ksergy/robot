@@ -85,7 +85,6 @@ hash_map_node_t *hash_map_get(hash_map_t *hm, hash_t h) {
 }
 
 void hash_map_remove(hash_map_t *hm, hash_t h) {
-    avl_tree_node_t *atn;
     hash_map_node_t *hmn;
 
     assert(hm);
@@ -188,7 +187,7 @@ hash_map_node_element_t *hash_map_node_next(hash_map_node_t *hmn,
     assert(hmn);
 
     if (!el)
-        return;
+        return NULL;
 
     assert(&hmn->data_list == el->host);
 
@@ -201,7 +200,7 @@ hash_map_node_element_t *hash_map_node_prev(hash_map_node_t *hmn,
     assert(hmn);
 
     if (!el)
-        return;
+        return NULL;
 
     assert(&hmn->data_list == el->host);
 

@@ -180,23 +180,23 @@ START_TEST(test_avl_tree_remove_ok) {
 
     k = 0;
     atn[0] = avl_tree_add(&t, k);
-    atn[0]->data = 1;
+    atn[0]->data = (void *)1;
 
     k = -1;
     atn[1] = avl_tree_add(&t, k);
-    atn[1]->data = 2;
+    atn[1]->data = (void *)2;
 
     k = 1;
     atn[2] = avl_tree_add(&t, k);
-    atn[2]->data = 3;
+    atn[2]->data = (void *)3;
 
     k = 2;
     atn[3] = avl_tree_add(&t, k);
-    atn[3]->data = 4;
+    atn[3]->data = (void *)4;
 
     k = 3;
     atn[4] = avl_tree_add(&t, k);
-    atn[4]->data = 5;
+    atn[4]->data = (void *)5;
 
     ck_assert_int_eq(t.count, 5);
 

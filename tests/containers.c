@@ -365,7 +365,6 @@ START_TEST(test_list_prepend_noninplace_ok) {
     list_t l;
     list_element_t *lel[3];
     list_element_t *init_front, *init_back;
-    struct el *element;
 
     initialize_list(l, false);
 
@@ -496,7 +495,6 @@ START_TEST(test_list_append_noninplace_ok) {
     list_t l;
     list_element_t *lel[3];
     list_element_t *init_front, *init_back;
-    struct el *element;
 
     initialize_list(l, false);
 
@@ -558,7 +556,6 @@ START_TEST(test_list_add_after_inplace_ok) {
     list_t l;
     list_element_t *lel[3];
     list_element_t *init_front, *init_back;
-    struct el *element;
 
     initialize_list(l, true);
 
@@ -617,7 +614,6 @@ START_TEST(test_list_add_after_noninplace_ok) {
     list_t l;
     list_element_t *lel[3];
     list_element_t *init_front, *init_back;
-    struct el *element;
 
     initialize_list(l, false);
 
@@ -677,7 +673,6 @@ START_TEST(test_list_add_before_inplace_ok) {
     list_t l;
     list_element_t *lel[3];
     list_element_t *init_front, *init_back;
-    struct el *element;
 
     initialize_list(l, true);
 
@@ -737,7 +732,6 @@ START_TEST(test_list_add_before_noninplace_ok) {
     list_t l;
     list_element_t *lel[3];
     list_element_t *init_front, *init_back;
-    struct el *element;
 
     initialize_list(l, false);
 
@@ -795,12 +789,10 @@ END_TEST
 START_TEST(test_list_remove_and_advance_ok) {
     list_t l;
     list_element_t *lel[4], *l_tst;
-    list_element_t *init_front, *init_back;
-    struct el *element;
+    list_element_t *init_back;
 
     initialize_list(l, false);
 
-    init_front = list_begin(&l);
     init_back = list_end(&l);
 
     lel[0] = list_append(&l);
@@ -830,7 +822,6 @@ START_TEST(test_list_begin_end_next_prev) {
     list_t l;
     list_element_t *lel[4], *l_tst;
     list_element_t *init_front, *init_back;
-    struct el *element;
 
     initialize_list(l, false);
 
