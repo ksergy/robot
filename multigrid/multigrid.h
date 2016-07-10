@@ -196,4 +196,6 @@ list_t multigrid_id_to_path(multigrid_t *mg, grid_id_t id);
  */
 grid_id_t multigrid_path_to_id(multigrid_t *mg, const list_t *path);
 
+const grid_t *multigrid_get_grid(const multigrid_t *mg, grid_id_t id);
+
 #endif /* _MULTIGRID_H_ */

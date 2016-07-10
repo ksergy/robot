@@ -58,7 +58,7 @@ static
 grid_t *multigrid_add_grid(multigrid_t *host, grid_id_t id);
 
 static
-grid_t *multigrid_get_grid(multigrid_t *host, grid_id_t id);
+grid_t *multigrid_get_grid_(multigrid_t *host, grid_id_t id);
 
 static
 pic_val_t picture_value(const picture_t *pic,
@@ -255,7 +255,7 @@ void grid_setup_neighborhood_children_relations(grid_t *g, bool recursive) {
 do {                                                            \
     child_idx = division_scheme_idx(ds, &child_pos);            \
     child_id = grid_child_id(g, child_idx);                     \
-    child = multigrid_get_grid(host, child_id);                 \
+    child = multigrid_get_grid_(host, child_id);                \
 } while(0)
 
 #define neighbours(edge)                                        \
@@ -263,7 +263,7 @@ do {                                                            \
     e = edge;                                                   \
     neigh_idx = division_scheme_idx(ds, &neigh_pos);            \
     neigh_id = grid_child_id(g, neigh_idx);                     \
-    neigh = multigrid_get_grid(host, neigh_id);                 \
+    neigh = multigrid_get_grid_(host, neigh_id);                \
     grid_set_neighbourhood(child, neigh, e);                    \
 } while(0)
 
@@ -369,7 +369,7 @@ do {                                                                \
              ++grid_edge_pos_coord(edge, sub_pos)) {                \
             sub_idx = division_scheme_idx(ds, &sub_pos);            \
             sub_id = grid_child_id(tmp, sub_idx);                   \
-            sub = multigrid_get_grid(host, sub_id);                 \
+            sub = multigrid_get_grid_(host, sub_id);                \
                                                                     \
             grid_set_neighbourhood(child, sub, edge);               \
                                                                     \
@@ -396,7 +396,7 @@ do {                                                                        \
              neigh_it.it;                                                   \
              neigh_it = set_next(&g->neighbors[edge], neigh_it.it)) {       \
             neigh_id = neigh_it.k;                                          \
-            neigh = multigrid_get_grid(host, neigh_id);                     \
+            neigh = multigrid_get_grid_(host, neigh_id);                    \
                                                                             \
             if (neigh->level > child->level)                                \
                 continue;                                                   \
@@ -421,7 +421,7 @@ do {                                                                    \
          neigh_it.it;                                                   \
          neigh_it = set_next(&g->neighbors[rev_e], neigh_it.it)) {      \
         neigh_id = neigh_it.k;                                          \
-        neigh = multigrid_get_grid(host, neigh_id);                     \
+        neigh = multigrid_get_grid_(host, neigh_id);                    \
         neighbours(edge);                                               \
     }                                                                   \
 } while(0);
@@ -456,7 +456,7 @@ grid_t *multigrid_add_grid(multigrid_t *host, grid_id_t id) {
     return atn->data;
 }
 
-grid_t *multigrid_get_grid(multigrid_t *host, grid_id_t id) {
+grid_t *multigrid_get_grid_(multigrid_t *host, grid_id_t id) {
     avl_tree_node_t *atn;
 
     assert(host);
@@ -597,4 +597,10 @@ grid_id_t multigrid_path_to_id(multigrid_t *mg, const list_t *path) {
     }
 
     return id;
+}
+
+const grid_t *multigrid_get_grid(const multigrid_t *mg, grid_id_t id) {
+    assert(mg);
+
+    return multigrid_get_grid_((multigrid_t *)mg, id);
 }
