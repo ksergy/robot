@@ -5,12 +5,6 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#define WITH_NEIGHBORHOOD       true
-#define WITHOUT_NEIGHBORHOOD    false
-
-#define RECURSIVE               true
-#define NOT_RECURSIVE           false
-
 /************************** types **************************/
 enum pic_pos {
     PP_FROM = 0,
@@ -31,11 +25,13 @@ void grid_init(multigrid_t *host,
                const picture_dimensions_t pic[PP_MAX], pic_val_t v);
 
 static
-void grid_grid(grid_t *g, bool with_negighborhood);
+void grid_grid(grid_t *g);
 
 static
-void grid_setup_neighborhood_children_relations(grid_t *g,
-                                                bool recursive);
+void grid_setup_children_neighbourhood(grid_t *g);
+
+static
+void grid_setup_children_neighbourhood_recursive(grid_t *g);
 
 static inline
 grid_id_t grid_child_id(grid_t *g, grid_id_t idx);
@@ -169,17 +165,14 @@ void picture_divide(const picture_dimensions_t pic[PP_MAX],
     }
 }
 
-void grid_grid(grid_t *g, bool with_negighborhood) {
+void grid_grid(grid_t *g) {
     grid_level_t l = g->level + 1;
     multigrid_t *host = g->host;
-    /* grid_id_t id_segment = g->id + 1;
-    grid_id_t lcap = *(grid_id_t *)vector_get(&host->level_capacity, l); */
     picture_dimensions_t pic[PP_MAX] = {
         [PP_FROM] = g->from,
         [PP_SIZE] = g->size
     };
 
-    /* grid_id_t id_offset; */
     picture_dimensions_t child_pic[PP_MAX];
     division_scheme_t pos;
     grid_t *child;
@@ -188,31 +181,25 @@ void grid_grid(grid_t *g, bool with_negighborhood) {
     if (!g->should_grid)
         return;
 
-    /* TODO: rethink with grid neighbourhood setup employment! */
-    if (l < g->host->max_level) {
-        g->grided = true;
-        for (/* id_offset = 0, */ X(pos) = 0;
-             X(pos) < X(host->ds);
-             ++X(pos)) {
-            for (Y(pos) = 0; Y(pos) < Y(host->ds);
-                 /*id_offset += lcap,*/ ++Y(pos)) {
-                picture_divide(pic, &host->ds, &pos, child_pic);
-                child_pv = picture_value(&host->pic, child_pic);
+    if (l >= g->host->max_level)
+        return;
 
-                grid_id_t id = grid_child_id(
-                    g, division_scheme_idx(&g->host->ds, &pos)
-                );
+    g->grided = true;
+    for (X(pos) = 0; X(pos) < X(host->ds); ++X(pos)) {
+        for (Y(pos) = 0; Y(pos) < Y(host->ds); ++Y(pos)) {
+            picture_divide(pic, &host->ds, &pos, child_pic);
+            child_pv = picture_value(&host->pic, child_pic);
 
-                child = multigrid_add_grid(host, id);
-                grid_init(host, child, id, l, g, &pos, child_pic, child_pv);
+            grid_id_t id = grid_child_id(
+                g, division_scheme_idx(&g->host->ds, &pos)
+            );
 
-                grid_grid(child, with_negighborhood);
-            }
-        }
-    }
+            child = multigrid_add_grid(host, id);
+            grid_init(host, child, id, l, g, &pos, child_pic, child_pv);
 
-    if (with_negighborhood)
-        grid_setup_neighborhood_children_relations(g, RECURSIVE);
+            grid_grid(child);
+        }   /* for (Y(pos) = 0; Y(pos) < Y(host->ds); ++Y(pos)) */
+    }   /* for (X(pos) = 0; X(pos) < X(host->ds); ++X(pos)) */
 }
 
 grid_id_t grid_child_id(grid_t *g, grid_id_t idx) {
@@ -232,9 +219,39 @@ void grid_set_neighbourhood(grid_t *from, grid_t *to, grid_edge_t e) {
     set_add_single(&to->neighbors[grid_edge_inverse(e)], from->id);
 }
 
-void grid_setup_neighborhood_children_relations(grid_t *g, bool recursive) {
-    assert(g);
+void grid_setup_children_neighbourhood_recursive(grid_t *g) {
+    list_t q;
+    list_element_t *qe;
+    multigrid_t *host = g->host;
+    division_scheme_t *ds = &host->ds;
+    grid_id_t idx;
+    grid_id_t m = division_scheme_mul(ds);
 
+    list_init(&q, false, sizeof(grid_t *));
+
+    qe = list_append(&q);
+    qe->data = g;
+
+    while (list_size(&q)) {
+        qe = list_begin(&q);
+        g = (grid_t *)qe->data;
+
+        list_remove_and_advance(&q, qe);
+
+        if (!g->grided)
+            continue;
+
+        grid_setup_children_neighbourhood(g);
+
+        for (idx = 0; idx < m; ++idx) {
+            grid_id_t child_id = grid_child_id(g, idx);
+            qe = list_append(&q);
+            qe->data = multigrid_get_grid_(host, child_id);
+        }   /* for (idx = 0; idx < m; ++idx) */
+    }   /* while (list_size(&q)) */
+}
+
+void grid_setup_children_neighbourhood(grid_t *g) {
     multigrid_t *host = g->host;
     division_scheme_t child_pos, neigh_pos, *ds = &host->ds;
     grid_id_t neigh_idx, child_idx;
@@ -242,9 +259,6 @@ void grid_setup_neighborhood_children_relations(grid_t *g, bool recursive) {
     grid_t *child, *neigh;
     grid_edge_t e, rev_e;
     set_iterator_t neigh_it;
-
-    if (!g->grided)
-        return;
 
     /* ATP:
      * g is grided. g has some neighbours. g's childred are not grided.
@@ -535,7 +549,8 @@ void multigrid_purge(multigrid_t *mg) {
 void multigrid_grid(multigrid_t *mg) {
     assert(mg);
 
-    grid_grid(mg->id_0, WITH_NEIGHBORHOOD);
+    grid_grid(mg->id_0);
+    grid_setup_children_neighbourhood_recursive(mg->id_0);
 }
 
 list_t multigrid_id_to_path(multigrid_t *mg, grid_id_t id) {
