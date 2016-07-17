@@ -446,11 +446,11 @@ avl_tree_node_t *avl_tree_node_prev(avl_tree_node_t *n) {
 }
 
 avl_tree_node_t *avl_tree_node_min(avl_tree_node_t *n) {
-    return node_leftmost(n);
+    return n ? node_leftmost(n) : NULL;
 }
 
 avl_tree_node_t *avl_tree_node_max(avl_tree_node_t *n) {
-    return node_rightmost(n);
+    return n ? node_rightmost(n) : NULL;
 }
 
 void avl_tree_purge(avl_tree_t *tree) {
