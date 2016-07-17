@@ -2,6 +2,7 @@
 #include "avl-tree.h"
 #include "hash-map.h"
 #include "set.h"
+#include "multigrids.h"
 
 #include <check.h>
 #include <stdlib.h>
@@ -22,6 +23,9 @@ int main(int argc, char *argv[]) {
     srunner_add_suite(runner, s);
 
     s = set_suite();
+    srunner_add_suite(runner, s);
+
+    s = multigrid_suite();
     srunner_add_suite(runner, s);
 
     srunner_run_all(runner, CK_VERBOSE);
