@@ -454,8 +454,7 @@ list_element_t *list_remove_and_advance(list_t *l, list_element_t *el) {
     if (next)
         next->prev = prev;
 
-    if (prev || next)
-        -- l->count;
+    -- l->count;
 
     if (el == l->front)
         l->front = next;
