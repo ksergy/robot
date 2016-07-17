@@ -153,7 +153,7 @@ pic_val_t picture_value(const picture_t *pic,
              ++y)
             pv.v += pic->p[x * Y(pic->dim) + y];
 
-    pv.v /= Y(pp[PP_SIZE]) * X(pp[PP_SIZE]);
+    pv.v /= division_scheme_mul(&pp[PP_SIZE]);
 
     return pv;
 }
