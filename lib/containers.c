@@ -313,7 +313,7 @@ static const struct {
 
 void list_init(list_t *l, bool inplace, size_t size) {
     assert(l);
-    assert(size || inplace);
+    assert(!inplace || (inplace && size));
 
     l->front = l->back = NULL;
 
