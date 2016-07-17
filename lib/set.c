@@ -94,6 +94,9 @@ set_counter_t set_remove(set_t *s, set_key_t k) {
 
     atn = avl_tree_get(&s->tree, k);
 
+    if (!atn)
+        return 0;
+
     count = atn->data;
 
     next_value = *count;
