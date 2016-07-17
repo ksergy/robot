@@ -22,17 +22,26 @@ typedef enum division_scheme_axes {
 # define DS_Y_AXIS DS_Y_AXIS
 # define DS_AXES_NUMBER DS_AXES_NUMBER
 
+# define GRID_RECURSIVE                                     true
+# define GRID_WITH_PICTURE                                  true
+# define MULTIGRID_PICTURE_DIM_VERIFIED                     true
+
 struct grid;
 typedef struct grid grid_t;
 
 struct multigrid;
 typedef struct multigrid multigrid_t;
 
+struct multilayer_multigrid;
+typedef struct multilayer_multigrid multilayer_multigrid_t;
+
 struct picture;
 typedef struct picture picture_t;
 
+typedef unsigned int dimension_t;
+
 typedef struct division_scheme {
-    unsigned int v[DS_AXES_NUMBER];
+    dimension_t v[DS_AXES_NUMBER];
 } division_scheme_t;
 
 # define COORD_NAME(name)   DS_##name##_AXIS
@@ -146,6 +155,7 @@ do {                                            \
 struct grid {
     multigrid_t *host;
 
+    bool has_value;
     grid_value_t v;
 
     grid_id_t id;
@@ -162,12 +172,29 @@ struct grid {
 };
 
 struct multigrid {
-    picture_t pic;
-    division_scheme_t ds;
+    /**
+     * when equals to \c false \c pic->p may be NULL but not
+     * the \c pic itself as it ought to have valid \c picture_dimensions_t
+     * typed \c pic->dim
+     */
+    bool has_picture;
+    const picture_t *pic;
+    const division_scheme_t *ds;
     vector_t level_capacity;
     grid_level_t max_level;
     avl_tree_t grids; /* grids by id */
     grid_t *id_0;
+};
+
+struct multilayer_multigrid {
+    const list_t *pictures; /* list of picture_t */
+    const division_scheme_t *ds;
+    grid_level_t max_level;
+
+    vector_t multigrids;        /* vector of multigrid_t */
+
+    picture_t pic;
+    multigrid_t mg;             /* resulting multigrid */
 };
 
 /** Initialize multigrid structure.
@@ -176,8 +203,10 @@ struct multigrid {
  * \param max_level maximum level. The first undivided grids level.
  */
 void multigrid_init(multigrid_t *mg,
-                    picture_t pic,
-                    division_scheme_t ds,
+                    bool with_picture,
+                    bool pic_dim_verified,
+                    const picture_t *pic,
+                    const division_scheme_t *ds,
                     grid_level_t max_level);
 void multigrid_purge(multigrid_t *mg);
 void multigrid_grid(multigrid_t *mg);
@@ -190,12 +219,37 @@ void multigrid_grid(multigrid_t *mg);
  *         The first element shows position at level 1.
  *         Empty list is returned for zero id.
  */
-list_t multigrid_id_to_path(multigrid_t *mg, grid_id_t id);
+list_t multigrid_id_to_path(const multigrid_t *mg, grid_id_t id);
 
 /** Reverse for \c multigrid_id_to_path
  */
-grid_id_t multigrid_path_to_id(multigrid_t *mg, const list_t *path);
+grid_id_t multigrid_path_to_id(const multigrid_t *mg, const list_t *path);
 
 const grid_t *multigrid_get_grid(const multigrid_t *mg, grid_id_t id);
+
+/* grid getters */
+const set_t *grid_get_neighbours(const grid_t *g, grid_edge_t e);
+bool grid_grided(const grid_t *g);
+grid_id_t grid_child_id(const grid_t *g, grid_id_t idx);
+grid_id_t grid_child_id_pos(const grid_t *g, const division_scheme_t *pos);
+
+/* multilayer multigrid */
+/**
+ * Multilayer multigrid allows for multivalued picture griding.
+ * Multivalued picture is a list of pictures each one representing
+ * a single layer of values.
+ * Each layer will be grided with its own multigrid.
+ * The resulting multigrids share (by value) the same division scheme.
+ *
+ * The multilayer multigrid will never call \c multigrid_grid on resulting
+ * multigrid. Instead it will use low level grid API to grid grids.
+ */
+void multilayer_multigrid_init(multilayer_multigrid_t *mmg,
+                               const list_t *pictures,
+                               const division_scheme_t *ds,
+                               grid_level_t max_level);
+void multilayer_multigrid_grid(multilayer_multigrid_t *mmg);
+const multigrid_t *multilayer_multigrid_get_mg(const multilayer_multigrid_t *mmg);
+void multilayer_multigrid_purge(multilayer_multigrid_t *mmg);
 
 #endif /* _MULTIGRID_H_ */
