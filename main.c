@@ -198,7 +198,7 @@ int main(void) {
 
     printf("Capacities:\n");
     grid_id_t *g_id;
-    for (g_id = vector_begin(&mg.level_capacity); g_id;
+    for (g_id = vector_begin(&mg.level_capacity); g_id != vector_end(&mg.level_capacity);
          g_id = vector_next(&mg.level_capacity, g_id))
          printf("[%03llu] : %llu\n",
              (long long unsigned int)(((void *)g_id - vector_begin(&mg.level_capacity)) / sizeof(*g_id)),
