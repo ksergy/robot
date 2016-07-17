@@ -508,7 +508,7 @@ void multilayer_multigrid_merge_multigrids_id(multilayer_multigrid_t *mmg,
     division_scheme_t g_child_pos;
     grid_t *g = multigrid_get_grid_(&mmg->mg, id);
 
-    for (mg = vector_begin(&mmg->multigrids); mg;
+    for (mg = vector_begin(&mmg->multigrids); mg != vector_end(&mmg->multigrids);
          mg = vector_next(&mmg->multigrids, mg)) {
         mg_g = multigrid_get_grid_(mg, id);
 
@@ -766,7 +766,7 @@ void multilayer_multigrid_grid(multilayer_multigrid_t *mmg) {
 
     assert(mmg);
 
-    for (mg = vector_begin(&mmg->multigrids); mg;
+    for (mg = vector_begin(&mmg->multigrids); mg != vector_end(&mmg->multigrids);
          mg = vector_next(&mmg->multigrids, mg))
         multigrid_grid(mg);
 
@@ -783,7 +783,7 @@ void multilayer_multigrid_purge(multilayer_multigrid_t *mmg) {
     if (!mmg)
         return;
 
-    for (mg = vector_begin(&mmg->multigrids); mg;
+    for (mg = vector_begin(&mmg->multigrids); mg != vector_end(&mmg->multigrids);
          mg = vector_next(&mmg->multigrids, mg))
         multigrid_purge(mg);
 
