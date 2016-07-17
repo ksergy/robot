@@ -71,12 +71,17 @@ static
 void multilayer_multigrid_merge_multigrids_id(multilayer_multigrid_t *mmg,
                                               grid_id_t id);
 
+static
+void grid_purge(grid_t *g);
+
 /************************** functions definitions **************************/
 void grid_init(multigrid_t *host,
                grid_t *g, grid_id_t id, grid_level_t level,
                grid_t *parent, const division_scheme_t *pos,
                const picture_dimensions_t pic[PP_MAX],
                bool has_value, pic_val_t v) {
+    grid_edge_t e;
+
     g->host = host;
     g->id = id;
     g->has_value = has_value;
@@ -93,9 +98,15 @@ void grid_init(multigrid_t *host,
     g->should_grid = v.should_grid;
     g->grided = false;
 
-    grid_edge_t e;
     for (e = GE_MIN; e <= GE_MAX; ++e)
         set_init(&g->neighbors[e]);
+}
+
+void grid_purge(grid_t *g) {
+    grid_edge_t e;
+
+    for (e = GE_MIN; e <= GE_MAX; ++e)
+        set_purge(&g->neighbors[e]);
 }
 
 grid_id_t division_scheme_mul(const division_scheme_t *ds) {
@@ -579,11 +590,18 @@ void multigrid_init(multigrid_t *mg,
 }
 
 void multigrid_purge(multigrid_t *mg) {
+    avl_tree_node_t *atn;
     assert(mg);
 
     mg->id_0 = 0;
     mg->max_level = 0;
+    for (atn = avl_tree_node_min(mg->grids.root); atn;
+         atn = avl_tree_node_next(atn))
+         grid_purge(atn->data);
+
     avl_tree_purge(&mg->grids);
+
+    vector_deinit(&mg->level_capacity);
 }
 
 void multigrid_grid(multigrid_t *mg) {
