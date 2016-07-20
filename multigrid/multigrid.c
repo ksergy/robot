@@ -512,17 +512,19 @@ void multilayer_multigrid_merge_multigrids_id(multilayer_multigrid_t *mmg,
          mg = vector_next(&mmg->multigrids, mg)) {
         mg_g = multigrid_get_grid_(mg, id);
 
-        g->should_grid |= mg_g->grided;
+        g->should_grid |= (mg_g && mg_g->grided);
     }
 
-    grid_grid(g, !GRID_RECURSIVE, !GRID_WITH_PICTURE);
+    if (g->should_grid) {
+        grid_grid(g, !GRID_RECURSIVE, !GRID_WITH_PICTURE);
 
-    for (X(g_child_pos) = 0; X(g_child_pos) < X_PTR(mmg->ds); ++X(g_child_pos))
-        for (Y(g_child_pos) = 0; Y(g_child_pos) < Y_PTR(mmg->ds); ++Y(g_child_pos))
-            multilayer_multigrid_merge_multigrids_id(
-                mmg,
-                grid_child_id(g, division_scheme_idx(mmg->ds, &g_child_pos))
-            );
+        for (X(g_child_pos) = 0; X(g_child_pos) < X_PTR(mmg->ds); ++X(g_child_pos))
+            for (Y(g_child_pos) = 0; Y(g_child_pos) < Y_PTR(mmg->ds); ++Y(g_child_pos))
+                multilayer_multigrid_merge_multigrids_id(
+                    mmg,
+                    grid_child_id(g, division_scheme_idx(mmg->ds, &g_child_pos))
+                );
+    }
 }
 
 /************************** API **************************/
@@ -722,7 +724,7 @@ void multilayer_multigrid_init(multilayer_multigrid_t *mmg,
     pic = (const picture_t *)pic_el->data;
     dim = &pic->dim;
 
-    for (dim_idx = 0; dim_idx < DS_AXES_NUMBER; ++dim)
+    for (dim_idx = 0; dim_idx < DS_AXES_NUMBER; ++dim_idx)
         assert(0 == (dim->v[dim_idx] % ds->v[dim_idx]));
 
     for (pic_el = list_next((list_t *)pictures, (list_element_t *)pic_el);
@@ -730,7 +732,7 @@ void multilayer_multigrid_init(multilayer_multigrid_t *mmg,
          pic_el = list_next((list_t *)pictures, (list_element_t *)pic_el)) {
         pic = pic_el->data;
 
-        for (dim_idx = 0; dim_idx < DS_AXES_NUMBER; ++dim)
+        for (dim_idx = 0; dim_idx < DS_AXES_NUMBER; ++dim_idx)
             same_size = (dim->v[dim_idx] == pic->dim.v[dim_idx]);
     }
 
