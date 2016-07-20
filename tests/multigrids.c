@@ -333,11 +333,130 @@ START_TEST(test_pure_multigrid) {
 
     set_purge(&TST);
     multigrid_purge(&mg);
+    list_purge(&id_q);
 }
 END_TEST
 
 START_TEST(test_multilayer_multigrid) {
-    /* TODO */
+    multilayer_multigrid_t mmg;
+    list_t pic_list;
+    const multigrid_t *mg;
+    grid_id_t id;
+    division_scheme_t pos;
+    const grid_t *g;
+    list_t id_q;
+    list_element_t *id_el;
+    set_t TST;
+
+    set_init(&TST);
+
+    /* Level - 0 */
+    set_add_single(&TST, 0);
+
+    /* Level - 1 */
+    set_add_single(&TST, 1);
+    set_add_single(&TST, 260);
+    set_add_single(&TST, 519);
+    set_add_single(&TST, 778);
+    set_add_single(&TST, 1037);
+    set_add_single(&TST, 1296);
+
+    /* Level - 2 */
+    set_add_single(&TST, 2);
+    set_add_single(&TST, 45);
+    set_add_single(&TST, 88);
+    set_add_single(&TST, 131);
+    set_add_single(&TST, 174);
+    set_add_single(&TST, 217);
+
+    set_add_single(&TST, 520);
+    set_add_single(&TST, 563);
+    set_add_single(&TST, 606);
+    set_add_single(&TST, 649);
+    set_add_single(&TST, 692);
+    set_add_single(&TST, 735);
+
+    set_add_single(&TST, 1038);
+    set_add_single(&TST, 1081);
+    set_add_single(&TST, 1124);
+    set_add_single(&TST, 1167);
+    set_add_single(&TST, 1210);
+    set_add_single(&TST, 1253);
+
+    set_add_single(&TST, 1297);
+    set_add_single(&TST, 1340);
+    set_add_single(&TST, 1383);
+    set_add_single(&TST, 1426);
+    set_add_single(&TST, 1469);
+    set_add_single(&TST, 1512);
+
+    /* Level 3 */
+    set_add_single(&TST, 175);
+    set_add_single(&TST, 182);
+    set_add_single(&TST, 189);
+    set_add_single(&TST, 196);
+    set_add_single(&TST, 203);
+    set_add_single(&TST, 210);
+
+    set_add_single(&TST, 1125);
+    set_add_single(&TST, 1132);
+    set_add_single(&TST, 1139);
+    set_add_single(&TST, 1146);
+    set_add_single(&TST, 1153);
+    set_add_single(&TST, 1160);
+
+    set_add_single(&TST, 1513);
+    set_add_single(&TST, 1520);
+    set_add_single(&TST, 1527);
+    set_add_single(&TST, 1534);
+    set_add_single(&TST, 1541);
+    set_add_single(&TST, 1548);
+
+    list_init(&pic_list, false, 0);
+
+    list_append(&pic_list)->data = (void *)&PIC1;
+    list_append(&pic_list)->data = (void *)&PIC2;
+
+    multilayer_multigrid_init(
+        &mmg,
+        &pic_list,
+        &ds,
+        MAX_LEVEL
+    );
+
+    multilayer_multigrid_grid(&mmg);
+
+    mg = multilayer_multigrid_get_mg(&mmg);
+
+    list_init(&id_q, false, 0);
+    id_el = list_append(&id_q);
+    id_el->data = (void *)0;
+
+    while (list_size(&id_q)) {
+        id_el = list_begin(&id_q);
+        id = (grid_id_t)id_el->data;
+        list_remove_and_advance(&id_q, id_el);
+
+        g = multigrid_get_grid(mg, id);
+
+        ck_assert_int_ne(set_count(&TST, g->id), 0);
+
+        set_remove(&TST, g->id);
+
+        if (g->grided)
+            for (X(pos) = 0; X(pos) < X(ds); ++X(pos))
+                for (Y(pos) = 0; Y(pos) < Y(ds); ++Y(pos))
+                    list_append(&id_q)->data =
+                        (void *)grid_child_id_pos(g, &pos);
+    };
+
+    ck_assert_int_eq(set_size(&TST), 0);
+
+    set_purge(&TST);
+
+    multilayer_multigrid_purge(&mmg);
+    list_purge(&id_q);
+    list_purge(&pic_list);
 }
 END_TEST
 
