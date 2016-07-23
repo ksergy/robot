@@ -20,6 +20,22 @@ static const void const *POST_BACK_PTR = &_POST_BACK;
 
 typedef bool (*reallocer_func)(buffer_t *b, size_t newsize);
 
+/*@
+   requires \valid(b) &&
+            (b->real_size == 0 || \valid((int8_t *)b->data + (0..b->real_size - 1))) &&
+            b->user_size <= b->real_size;
+   assigns b->data, b->user_size, b->real_size;
+   behavior realloc_success:
+     ensures b->user_size == newsize &&
+             b->real_size == newsize && \result == \true;
+   behavior realloc_fail:
+     ensures b->data == \old(b->data) && b->user_size == \old(b->user_size) &&
+             b->real_size == \old(b->real_size) && \result == \false;
+   ensures \valid((int8_t *)b->data) && \valid((int8_t *)b->data + (0..b->real_size - 1)) &&
+           b->user_size == b->real_size;
+   complete behaviors realloc_success, realloc_fail;
+   disjoint behaviors realloc_success, realloc_fail;
+ */
 static
 bool realloc_shrinkable(buffer_t *b, size_t newsize) {
     void *d;
@@ -34,6 +50,29 @@ bool realloc_shrinkable(buffer_t *b, size_t newsize) {
     return !!d;
 }
 
+/*@
+   requires \valid(b) &&
+            (b->real_size == 0 || \valid((int8_t *)b->data + (0..b->real_size - 1))) &&
+            b->user_size <= b->real_size;
+   assigns b->data, b->user_size, b->real_size;
+   behavior no_realloc:
+     requires b->real_size >= newsize;
+     ensures b->user_size == newsize && b->real_size == \old(b->real_size) &&
+             b->data == \old(b->data);
+   behavior realloc_success:
+     requires b->real_size < newsize;
+     ensures b->user_size == newsize &&
+             b->real_size == newsize &&
+             \result == \true;
+   behavior realloc_fail:
+     requires b->real_size < newsize;
+     ensures b->data == \old(b->data) && b->user_size == \old(b->user_size) &&
+             b->real_size == \old(b->real_size) && \result == \false;
+   ensures \valid((int8_t *)b->data) && \valid((int8_t *)b->data + (0..b->real_size - 1)) &&
+           b->user_size <= b->real_size;
+   complete behaviors no_realloc, realloc_success, realloc_fail;
+   disjoint behaviors no_realloc, realloc_success, realloc_fail;
+ */
 static
 bool realloc_nonshrinkable(buffer_t *b, size_t newsize) {
     void *d;
@@ -56,6 +95,46 @@ bool realloc_nonshrinkable(buffer_t *b, size_t newsize) {
     return !!d;
 }
 
+/*@
+   requires \valid(b) &&
+            (b->real_size == 0 || \valid((int8_t *)b->data + (0..b->real_size - 1))) &&
+            b->user_size <= b->real_size;
+
+   assigns b->data, b->user_size, b->real_size;
+
+   behavior realloc_fail:
+     ensures \result == \false && b->user_size == \old(b->user_size)
+             && b->real_size == \old(b->real_size);
+
+   behavior no_realloc:
+     requires newsize < b->real_size && newsize >= b->real_size / 4;
+     ensures b->user_size == newsize && b->real_size == \old(b->real_size) &&
+             b->data == \old(b->data) && \result == \true;
+
+   behavior realloc_decrease:
+     requires newsize < b->real_size / 4;
+     ensures b->user_size == newsize &&
+             b->real_size == \old(b->real_size) / 2 && \result == \true;
+
+   behavior realloc_increase_twice:
+     requires newsize > b->real_size && newsize < b->real_size * 2;
+     ensures b->real_size == \old(b->real_size) * 2 &&
+             b->user_size == newsize && \result == \true;
+
+   behavior realloc_increase:
+     requires newsize >= b->real_size * 2;
+     ensures b->real_size == newsize && b->user_size == newsize &&
+             \result == \true;
+
+   ensures \valid((int8_t *)b->data) && \valid((int8_t *)b->data + (0..b->real_size - 1)) &&
+           b->user_size <= b->real_size;
+
+   complete behaviors no_realloc, realloc_decrease,
+                      realloc_increase_twice, realloc_increase, realloc_fail;
+
+   disjoint behaviors no_realloc, realloc_decrease,
+                      realloc_increase_twice, realloc_increase, realloc_fail;
+ */
 static
 bool realloc_economic(buffer_t *b, size_t newsize) {
     assert(b);
