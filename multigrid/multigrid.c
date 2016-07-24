@@ -264,31 +264,29 @@ void grid_setup_children_neighbourhood_recursive(grid_t *g) {
 }
 
 static inline
-void neighbourhood_setup_init_child(
-    multigrid_t *host,
-    grid_t *g,
-    const division_scheme_t *ds,
-    const division_scheme_t *child_pos,
-    grid_id_t *child_idx,
-    grid_id_t *child_id,
-    grid_t **child) {
+void neighbourhood_setup_init_child(multigrid_t *host,
+                                    grid_t *g,
+                                    const division_scheme_t *ds,
+                                    const division_scheme_t *child_pos,
+                                    grid_id_t *child_idx,
+                                    grid_id_t *child_id,
+                                    grid_t **child) {
     *child_idx = division_scheme_idx(ds, child_pos);
     *child_id = grid_child_id(g, *child_idx);
     *child = multigrid_get_grid_(host, *child_id);
 }
 
 static inline
-void neighbourhood_setup_neighbours_internal(
-    multigrid_t *host,
-    grid_t *g,
-    grid_edge_t edge,
-    grid_edge_t *e,
-    const division_scheme_t *ds,
-    const division_scheme_t *neigh_pos,
-    grid_id_t *neigh_idx,
-    grid_id_t *neigh_id,
-    grid_t **neigh,
-    grid_t *child) {
+void neighbourhood_setup_neighbours_internal(multigrid_t *host,
+                                             grid_t *g,
+                                             grid_edge_t edge,
+                                             grid_edge_t *e,
+                                             const division_scheme_t *ds,
+                                             const division_scheme_t *neigh_pos,
+                                             grid_id_t *neigh_idx,
+                                             grid_id_t *neigh_id,
+                                             grid_t **neigh,
+                                             grid_t *child) {
     *e = edge;
     *neigh_idx = division_scheme_idx(ds, neigh_pos);
     *neigh_id = grid_child_id(g, *neigh_idx);
@@ -297,11 +295,10 @@ void neighbourhood_setup_neighbours_internal(
 }
 
 static inline
-void neighbourhood_setup_neighbours_external(
-    grid_edge_t *e,
-    grid_edge_t edge,
-    grid_t *child,
-    grid_t *neigh) {
+void neighbourhood_setup_neighbours_external(grid_edge_t *e,
+                                             grid_edge_t edge,
+                                             grid_t *child,
+                                             grid_t *neigh) {
     *e = edge;
     grid_set_neighbourhood(child, neigh, edge);
 }
@@ -313,11 +310,11 @@ dimension_t *grid_edge_fixed_coord(grid_edge_t e,
         case GE_N:
         case GE_S:
             return PTR_Y(child_pos);
-            break;
+
         case GE_E:
         case GE_W:
             return PTR_X(child_pos);
-            break;
+
         default:
             assert(0);
     }
@@ -328,13 +325,15 @@ dimension_t grid_edge_fixed_coord_val(grid_edge_t e,
                                       const division_scheme_t *ds) {
     switch (e) {
         case GE_N:
-            return 0;
-        case GE_S:
-            return Y_PTR(ds) - 1;
-        case GE_E:
-            return X_PTR(ds) - 1;
         case GE_W:
             return 0;
+
+        case GE_S:
+            return Y_PTR(ds) - 1;
+
+        case GE_E:
+            return X_PTR(ds) - 1;
+
         default:
             assert(0);
     }
@@ -344,18 +343,16 @@ static inline
 dimension_t grid_edge_other_coord_val(grid_edge_t e,
                                       const division_scheme_t *ds) {
     switch (e) {
-        case GE_N:
-            return Y_PTR(ds) - 1;
-            break;
+        case GE_E:
         case GE_S:
             return 0;
-            break;
-        case GE_E:
-            return 0;
-            break;
+
+        case GE_N:
+            return Y_PTR(ds) - 1;
+
         case GE_W:
             return X_PTR(ds) - 1;
-            break;
+
         default:
             assert(0);
     }
@@ -368,11 +365,11 @@ dimension_t *grid_edge_other_coord(grid_edge_t e,
         case GE_N:
         case GE_S:
             return PTR_X(child_pos);
-            break;
+
         case GE_E:
         case GE_W:
             return PTR_Y(child_pos);
-            break;
+
         default:
             assert(0);
     }
@@ -386,20 +383,19 @@ int delta_pos(grid_edge_t e, grid_t *child, grid_t *neigh) {
 }
 
 static inline
-void neighbourhood_setup_EDGE(
-    multigrid_t *host,
-    grid_t *g,
-    grid_edge_t edge,
-    grid_edge_t *e,
-    const division_scheme_t *ds,
-    division_scheme_t *child_pos,
-    grid_id_t *child_idx,
-    grid_id_t *child_id,
-    grid_t **child,
-    division_scheme_t *neigh_pos,
-    grid_id_t *neigh_idx,
-    grid_id_t *neigh_id,
-    grid_t **neigh) {
+void neighbourhood_setup_EDGE(multigrid_t *host,
+                              grid_t *g,
+                              grid_edge_t edge,
+                              grid_edge_t *e,
+                              const division_scheme_t *ds,
+                              division_scheme_t *child_pos,
+                              grid_id_t *child_idx,
+                              grid_id_t *child_id,
+                              grid_t **child,
+                              division_scheme_t *neigh_pos,
+                              grid_id_t *neigh_idx,
+                              grid_id_t *neigh_id,
+                              grid_t **neigh) {
     static const grid_edge_t EDGE_DELTA_MAP[GE_COUNT][3] = {
         [GE_N] = {
             [0] = GE_NE,
@@ -426,6 +422,7 @@ void neighbourhood_setup_EDGE(
 #define init_child                                              \
 neighbourhood_setup_init_child(                                 \
     host, g, ds, child_pos, child_idx, child_id, child)
+
     set_iterator_t neigh_it;
 
     X_PTR(child_pos) = Y_PTR(child_pos) = 0;
@@ -454,7 +451,8 @@ neighbourhood_setup_init_child(                                 \
                     case -1 ... 1:
                         neighbourhood_setup_neighbours_external(
                             e,
-                            EDGE_DELTA_MAP[edge][delta_pos(edge, *child, *neigh) + 1],
+                            EDGE_DELTA_MAP[edge][delta_pos(edge,
+                                                           *child, *neigh) + 1],
                             *child, *neigh);
                         break;
                 }
