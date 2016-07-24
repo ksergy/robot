@@ -15,6 +15,8 @@ if (WITH_COVERAGE)
         CACHE INTERNAL "" FORCE)
 endif (WITH_COVERAGE)
 
+enable_testing()
+
 add_subdirectory(lib)
 add_subdirectory(tests)
 add_subdirectory(multigrid)

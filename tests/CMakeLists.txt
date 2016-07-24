@@ -1,6 +1,4 @@
 
-enable_testing()
-
 include(FindPkgConfig)
 
 pkg_check_modules(check REQUIRED check)
