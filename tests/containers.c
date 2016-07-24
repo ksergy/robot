@@ -244,7 +244,7 @@ START_TEST(test_vector_begin_end_get_next_prev_ok) {
     }
 
     for (i = 0;
-         i < v.count; ++i) {
+         (unsigned)i < v.count; ++i) {
         el = vector_get(&v, i);
         ck_assert_int_eq(el->i, 0x01 << i);
     }

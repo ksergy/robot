@@ -7,7 +7,7 @@ bool DIRECTED;
 void setup(void) {
     graph_edge_count_t i;
     graph_vertex_idx_t from, to;
-    graph_edge_idx_t e;
+    graph_edge_idx_t __attribute__((unused)) e;
 
     graph_init(G, 10, DIRECTED);
 
