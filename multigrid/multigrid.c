@@ -296,7 +296,7 @@ do {                                                            \
 
     /* 1. set up neighbourhood inside division scheme */
     for (Y(child_pos) = 0; Y(child_pos) < Y_PTR(ds) - 1; ++ Y(child_pos)) {
-        X(child_pos) = Y(child_pos) = 0;
+        X(child_pos) = 0;
 
         init_child;
 
@@ -336,6 +336,10 @@ do {                                                            \
         ++Y(neigh_pos);
         e = GE_S;
         neighbours(GE_S);
+
+        --X(neigh_pos);
+        e = GE_SW;
+        neighbours(GE_SW);
     }   /* for (Y(child_pos) = 0; Y(child_pos) < Y(ds) - 1; ++ Y(child_pos)) */
 
     for (X(child_pos) = 0; X(child_pos) < X_PTR(ds) - 1; ++ X(child_pos)) {
@@ -440,7 +444,7 @@ do {                                                                        \
 #define EDGE_CORNER(edge)                                               \
 do {                                                                    \
     rev_e = grid_edge_inverse(edge);                                    \
-    grid_corner_pos(edge, child_pos, (*ds));                            \
+    grid_corner_pos(edge##_INVERSE, child_pos, (*ds));                  \
                                                                         \
     init_child;                                                         \
                                                                         \
@@ -449,7 +453,7 @@ do {                                                                    \
          neigh_it = set_next(&g->neighbors[rev_e], neigh_it.it)) {      \
         neigh_id = neigh_it.k;                                          \
         neigh = multigrid_get_grid_(host, neigh_id);                    \
-        neighbours(edge);                                               \
+        neighbours(rev_e);                                              \
     }                                                                   \
 } while(0)
 

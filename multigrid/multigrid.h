@@ -91,6 +91,10 @@ typedef enum grid_edge {
 # define GE_S_INVERSE                       GE_N
 # define GE_W_INVERSE                       GE_E
 # define GE_E_INVERSE                       GE_W
+# define GE_NE_INVERSE                      GE_SW
+# define GE_NW_INVERSE                      GE_SE
+# define GE_SE_INVERSE                      GE_NW
+# define GE_SW_INVERSE                      GE_NE
 
 # define grid_edge_inverse(e)               ((e + GE_HALF) & GE_MAX)
 # define grid_edge_fixed_coord(e, pos)      e##_COORD(pos)
@@ -123,6 +127,12 @@ do {                                            \
     division_scheme_t tmp = e##_CORNER_POS(ds); \
     pos = tmp;                                  \
 } while (0)
+
+# define GE_NE_INVERSE_CORNER_POS(ds)   GE_SW_CORNER_POS(ds)
+# define GE_NW_INVERSE_CORNER_POS(ds)   GE_SE_CORNER_POS(ds)
+# define GE_SE_INVERSE_CORNER_POS(ds)   GE_NW_CORNER_POS(ds)
+# define GE_SW_INVERSE_CORNER_POS(ds)   GE_NE_CORNER_POS(ds)
+
 # define GE_NE_CORNER_POS(ds)           \
 {                                       \
     .v = {                              \
