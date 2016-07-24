@@ -46,10 +46,13 @@ typedef struct division_scheme {
 
 # define COORD_NAME(name)   DS_##name##_AXIS
 # define COORD(name, a)     a.v[COORD_NAME(name)]
+# define COORD_PTR(name, a) a->v[COORD_NAME(name)]
 # define X(a)               COORD(X, a)
 # define Y(a)               COORD(Y, a)
 # define X_PTR(ptr)         X((*(division_scheme_t *)ptr))
 # define Y_PTR(ptr)         Y((*(division_scheme_t *)ptr))
+# define PTR_X(a)           (&COORD_PTR(X, a))
+# define PTR_Y(a)           (&COORD_PTR(Y, a))
 
 typedef division_scheme_t picture_dimensions_t;
 
@@ -86,41 +89,7 @@ typedef enum grid_edge {
     GE_COUNT    = GE_HALF * 2
 } grid_edge_t;
 
-# define grid_edge_inverse_val(e)           e##_INVERSE
-# define GE_N_INVERSE                       GE_S
-# define GE_S_INVERSE                       GE_N
-# define GE_W_INVERSE                       GE_E
-# define GE_E_INVERSE                       GE_W
-# define GE_NE_INVERSE                      GE_SW
-# define GE_NW_INVERSE                      GE_SE
-# define GE_SE_INVERSE                      GE_NW
-# define GE_SW_INVERSE                      GE_NE
-
 # define grid_edge_inverse(e)               ((e + GE_HALF) & GE_MAX)
-# define grid_edge_fixed_coord(e, pos)      e##_COORD(pos)
-# define grid_edge_other_coord(e, pos)      e##_OTHER_COORD(pos)
-
-# define GE_N_COORD                         Y
-# define GE_S_COORD                         Y
-# define GE_W_COORD                         X
-# define GE_E_COORD                         X
-
-# define GE_N_OTHER_COORD                   X
-# define GE_S_OTHER_COORD                   X
-# define GE_W_OTHER_COORD                   Y
-# define GE_E_OTHER_COORD                   Y
-
-# define grid_edge_fixed_coord_val(e, pos)  e##_COORD_VAL(pos)
-# define GE_N_COORD_VAL(pos)                (0)
-# define GE_S_COORD_VAL(pos)                (Y(pos) - 1)
-# define GE_E_COORD_VAL(pos)                (X(pos) - 1)
-# define GE_W_COORD_VAL(pos)                (0)
-
-# define grid_edge_other_coord_val(e, pos)  e##_OTHER_COORD_VAL(pos)
-# define GE_N_OTHER_COORD_VAL(pos)          (Y(pos) - 1)
-# define GE_S_OTHER_COORD_VAL(pos)          (0)
-# define GE_E_OTHER_COORD_VAL(pos)          (0)
-# define GE_W_OTHER_COORD_VAL(pos)          (X(pos) - 1)
 
 # define grid_corner_pos(e, pos, ds)            \
 do {                                            \
