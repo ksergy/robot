@@ -380,67 +380,9 @@ dimension_t *grid_edge_other_coord(grid_edge_t e,
 
 static inline
 int delta_pos(grid_edge_t e, grid_t *child, grid_t *neigh) {
-    return abs( /* coord for inversed edge is the same */
-        *grid_edge_fixed_coord(e, &child->position)
-        - *grid_edge_fixed_coord(e, &neigh->position)
-    );
-}
-
-static inline
-void neighbourhood_setup_EDGE_sub(
-    multigrid_t *host,
-    grid_t *g,
-    grid_edge_t edge,
-    grid_edge_t *e,
-    const division_scheme_t *ds,
-    division_scheme_t *child_pos,
-    grid_id_t *child_idx,
-    grid_id_t *child_id,
-    grid_t **child,
-    division_scheme_t *neigh_pos,
-    grid_id_t *neigh_idx,
-    grid_id_t *neigh_id,
-    grid_t **neigh) {
-    division_scheme_t sub_pos;
-    grid_id_t sub_idx, sub_id;
-    grid_t *sub;
-    grid_t *tmp;
-
-    list_t q;
-    list_element_t *qe, *new_qe;
-    list_init(&q, false, 0);
-
-    qe = list_append(&q);
-    qe->data = *neigh;
-
-    X(sub_pos) = Y(sub_pos) = 0;
-
-    *grid_edge_other_coord(edge, &sub_pos) =
-        grid_edge_other_coord_val(edge, ds);
-
-    while (list_size(&q)) {
-        qe = list_begin(&q);
-        tmp = qe->data;
-
-        list_remove_and_advance(&q, qe);
-
-        if (!tmp->grided)
-            continue;
-
-        for (*grid_edge_fixed_coord(edge, &sub_pos) = 0;
-             *grid_edge_fixed_coord(edge, &sub_pos) <
-                 *grid_edge_fixed_coord(edge, (division_scheme_t *)ds);
-             ++ *grid_edge_fixed_coord(edge, &sub_pos)) {
-            sub_idx = division_scheme_idx(ds, &sub_pos);
-            sub_id = grid_child_id(tmp, sub_idx);
-            sub = multigrid_get_grid_(host, sub_id);
-
-            grid_set_neighbourhood(*child, sub, edge);
-
-            new_qe = list_append(&q);
-            new_qe->data = sub;
-        }   /* for (*grid_edge_fixed_coord(edge, sub_pos) = 0; */
-    }   /* while (list_size(&q)) */
+    return /* coord for inversed edge is the same */
+        *grid_edge_other_coord(e, &child->position)
+        - *grid_edge_other_coord(e, &neigh->position);
 }
 
 static inline
@@ -458,6 +400,29 @@ void neighbourhood_setup_EDGE(
     grid_id_t *neigh_idx,
     grid_id_t *neigh_id,
     grid_t **neigh) {
+    static const grid_edge_t EDGE_DELTA_MAP[GE_COUNT][3] = {
+        [GE_N] = {
+            [0] = GE_NE,
+            [1] = GE_N,
+            [2] = GE_NW
+        },
+        [GE_E] = {
+            [0] = GE_SE,
+            [1] = GE_E,
+            [2] = GE_NE
+        },
+        [GE_S] = {
+            [0] = GE_SE,
+            [1] = GE_S,
+            [2] = GE_SW
+        },
+        [GE_W] = {
+            [0] = GE_SW,
+            [1] = GE_W,
+            [2] = GE_NW
+        }
+    };
+
 #define init_child                                              \
 neighbourhood_setup_init_child(                                 \
     host, g, ds, child_pos, child_idx, child_id, child)
@@ -485,12 +450,14 @@ neighbourhood_setup_init_child(                                 \
             if ((*neigh)->level < (*child)->level)
                 neighbourhood_setup_neighbours_external(e, edge, *child, *neigh);
             else /* if (neigh->level) == child->level) */
-                if (delta_pos(edge, *child, *neigh) <= 1)
-                    neighbourhood_setup_EDGE_sub(
-                        host, g, edge, e, ds,
-                        child_pos, child_idx, child_id, child,
-                        neigh_pos, neigh_idx, neigh_id, neigh
-                    );
+                switch (delta_pos(edge, *child, *neigh)) {
+                    case -1 ... 1:
+                        neighbourhood_setup_neighbours_external(
+                            e,
+                            EDGE_DELTA_MAP[edge][delta_pos(edge, *child, *neigh) + 1],
+                            *child, *neigh);
+                        break;
+                }
         }   /* for (neigh_it = set_begin(&g->neighbors[edge]); */
     }   /* for (grid_edge_other_coord) */
 #undef init_child
