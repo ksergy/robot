@@ -49,33 +49,33 @@ const grid_value_t PIC1_VAL[] = {
      * y = 0 .. dim[DS_Y_AXIS]
      */
 /* y =   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  */
-/*  0 */ V4(1),         V4(4),          V8(9),
-/*  1 */ V4(1),         V4(4),          V8(9),
-/*  2 */ V4(1),         V4(4),          V8(9),
-/*  3 */ V4(1),         V4(4),          V8(9),
-/*  4 */ V4(1),         V4(4),          V8(9),
-/*  5 */ V4(1),         V4(4),          V8(9),
-/*  6 */ V4(1),         V4(4),          V8(9),
-/*  7 */ V4(1),         V4(4),          V8(9),
-/*  8 */ V4(1),         V4(4),          V8(9),
-/*  9 */ V4(2),         V4(5),          V8(9),
-/* 10 */ V4(2),         V4(5),          V8(9),
-/* 11 */ V4(2),         V4(5),          V8(9),
-/* 12 */ V4(2),         V4(5),          V8(9),
-/* 13 */ V4(2),         V4(5),          V8(9),
-/* 14 */ V4(2),         V4(5),          V8(9),
-/* 15 */ V4(2),         V4(5),          V8(9),
-/* 16 */ V4(2),         V4(5),          V8(9),
-/* 17 */ V4(2),         V4(5),          V8(9),
-/* 18 */ V4(3),         V4(6),          V8(9),
-/* 19 */ V4(3),         V4(6),          V8(9),
-/* 20 */ V4(3),         V4(6),          V8(9),
-/* 21 */ V4(3),         V4(6),          V8(9),
-/* 22 */ V4(3),         V4(6),          V8(9),
-/* 23 */ V4(3),         V4(6),          V8(9),
-/* 24 */ V4(3),         V4(6),          V8(9),
-/* 25 */ V4(3),         V4(6),          V8(9),
-/* 26 */ V4(3),         V4(6),          V8(9),
+/*  0 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  1 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  2 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  3 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  4 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  5 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  6 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  7 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  8 */ V4(1),         V4(4),          V4(32),         V4(35),
+/*  9 */ V4(2),         V4(5),          V2(38), V2(41), V4(36),
+/* 10 */ V4(2),         V4(5),          V2(38), V2(41), V4(36),
+/* 11 */ V4(2),         V4(5),          V2(38), V2(41), V4(36),
+/* 12 */ V4(2),         V4(5),          V2(39), V2(42), V4(36),
+/* 13 */ V4(2),         V4(5),          V2(39), V2(42), V4(36),
+/* 14 */ V4(2),         V4(5),          V2(39), V2(42), V4(36),
+/* 15 */ V4(2),         V4(5),          V2(40), V2(43), V4(36),
+/* 16 */ V4(2),         V4(5),          V2(40), V2(43), V4(36),
+/* 17 */ V4(2),         V4(5),          V2(40), V2(43), V4(36),
+/* 18 */ V4(3),         V4(6),          V4(34),         V4(37),
+/* 19 */ V4(3),         V4(6),          V4(34),         V4(37),
+/* 20 */ V4(3),         V4(6),          V4(34),         V4(37),
+/* 21 */ V4(3),         V4(6),          V4(34),         V4(37),
+/* 22 */ V4(3),         V4(6),          V4(34),         V4(37),
+/* 23 */ V4(3),         V4(6),          V4(34),         V4(37),
+/* 24 */ V4(3),         V4(6),          V4(34),         V4(37),
+/* 25 */ V4(3),         V4(6),          V4(34),         V4(37),
+/* 26 */ V4(3),         V4(6),          V4(34),         V4(37),
 /* 27 */ V8(7),                         V4(10),         V4(18),
 /* 28 */ V8(7),                         V4(10),         V4(18),
 /* 29 */ V8(7),                         V4(10),         V4(18),
@@ -271,6 +271,13 @@ START_TEST(test_pure_multigrid) {
     set_add_single(&TST, 174);
     set_add_single(&TST, 217);
 
+    set_add_single(&TST, 779);
+    set_add_single(&TST, 822);
+    set_add_single(&TST, 865);
+    set_add_single(&TST, 908);
+    set_add_single(&TST, 951);
+    set_add_single(&TST, 994);
+
     set_add_single(&TST, 1038);
     set_add_single(&TST, 1081);
     set_add_single(&TST, 1124);
@@ -286,6 +293,13 @@ START_TEST(test_pure_multigrid) {
     set_add_single(&TST, 1512);
 
     /* Level 3 */
+    set_add_single(&TST, 823);
+    set_add_single(&TST, 830);
+    set_add_single(&TST, 837);
+    set_add_single(&TST, 844);
+    set_add_single(&TST, 851);
+    set_add_single(&TST, 858);
+
     set_add_single(&TST, 1125);
     set_add_single(&TST, 1132);
     set_add_single(&TST, 1139);
@@ -376,6 +390,13 @@ START_TEST(test_multilayer_multigrid) {
     set_add_single(&TST, 692);
     set_add_single(&TST, 735);
 
+    set_add_single(&TST, 779);
+    set_add_single(&TST, 822);
+    set_add_single(&TST, 865);
+    set_add_single(&TST, 908);
+    set_add_single(&TST, 951);
+    set_add_single(&TST, 994);
+
     set_add_single(&TST, 1038);
     set_add_single(&TST, 1081);
     set_add_single(&TST, 1124);
@@ -397,6 +418,13 @@ START_TEST(test_multilayer_multigrid) {
     set_add_single(&TST, 196);
     set_add_single(&TST, 203);
     set_add_single(&TST, 210);
+
+    set_add_single(&TST, 823);
+    set_add_single(&TST, 830);
+    set_add_single(&TST, 837);
+    set_add_single(&TST, 844);
+    set_add_single(&TST, 851);
+    set_add_single(&TST, 858);
 
     set_add_single(&TST, 1125);
     set_add_single(&TST, 1132);
