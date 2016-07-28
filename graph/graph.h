@@ -18,6 +18,10 @@ typedef uint32_t graph_vertex_idx_t;
 typedef uint64_t graph_edge_idx_t;
 typedef uint64_t graph_edge_count_t;
 
+typedef void (*graph_edge_purger_t)(graph_vertex_idx_t from,
+                                    graph_vertex_idx_t to,
+                                    void *data);
+
 struct graph {
     graph_vertex_idx_t vertices_number;
     graph_edge_count_t edges_number;
@@ -35,7 +39,7 @@ struct graph_edge_found {
 void graph_init(graph_t *g,
                 graph_vertex_idx_t vertices_number,
                 bool directed);
-void graph_deinit(graph_t *g);
+void graph_deinit(graph_t *g, graph_edge_purger_t gep);
 
 graph_edge_idx_t graph_add_edge(graph_t *g,
                                 graph_vertex_idx_t from, graph_vertex_idx_t to,

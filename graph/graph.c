@@ -2,6 +2,23 @@
 
 #include <assert.h>
 
+static
+void remove_edge(graph_t *g,
+                 avl_tree_node_t *atn,
+                 graph_edge_purger_t gep) {
+    graph_vertex_idx_t from, to;
+
+    if (gep) {
+        graph_edge_from_idx(g->vertices_number, atn->key, &from, &to);
+        gep(from, to, atn->data);
+    }
+
+    if (atn->left)
+        remove_edge(g, atn->left, gep);
+    if (atn->right)
+        remove_edge(g, atn->right, gep);
+}
+
 void graph_init(graph_t *g,
                 graph_vertex_idx_t vertices_number,
                 bool directed) {
@@ -14,8 +31,10 @@ void graph_init(graph_t *g,
     avl_tree_init(&g->adjacency_map, false, 0);
 }
 
-void graph_deinit(graph_t *g) {
+void graph_deinit(graph_t *g, graph_edge_purger_t gep) {
     assert(g);
+
+    remove_edge(g, g->adjacency_map.root, gep);
 
     avl_tree_purge(&g->adjacency_map);
 }

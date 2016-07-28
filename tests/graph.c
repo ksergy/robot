@@ -46,7 +46,7 @@ void setup(void) {
 }
 
 void teardown(void) {
-    graph_deinit(G);
+    graph_deinit(G, NULL);
     G = NULL;
 }
 
