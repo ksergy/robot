@@ -27,6 +27,7 @@ struct graph {
     graph_edge_count_t edges_number;
     bool directed;
 
+    /* TODO redo this data structure */
     /* key = graph_edge_idx(from, to), data = node data ptr */
     avl_tree_t adjacency_map;
 };
