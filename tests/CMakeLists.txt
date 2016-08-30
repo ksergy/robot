@@ -12,6 +12,8 @@ set_target_properties(tests
                       COMPILE_FLAGS "${check_CFLAGS}")
 target_link_libraries(tests
                       containers
-                      avl hash-map set multigrid graph ${check_LDFLAGS})
+                      avl hash-map set
+                      multigrid graph multigrid-converter
+                      ${check_LDFLAGS})
 
 add_test(NAME tests COMMAND tests)
