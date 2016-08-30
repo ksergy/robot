@@ -3,20 +3,44 @@
 #include <assert.h>
 
 static
-void remove_edge(graph_t *g,
-                 avl_tree_node_t *atn,
-                 graph_edge_purger_t gep) {
+void remove_edges(graph_t *g, graph_edge_purger_t gep) {
     graph_vertex_idx_t from, to;
+    graph_edge_idx_t edge_idx;
+    avl_tree_node_t *atn;
 
-    if (gep) {
-        graph_edge_from_idx(g->vertices_number, atn->key, &from, &to);
-        gep(from, to, atn->data);
+    if (!g->directed) {
+        while (g->adjacency_map.count) {
+            atn = g->adjacency_map.root;
+            edge_idx = atn->key;
+
+            if (gep) {
+                graph_edge_from_idx(g->vertices_number, atn->key, &from, &to);
+                gep(from, to, atn->data);
+            }
+
+            avl_tree_remove(&g->adjacency_map, edge_idx);
+
+            edge_idx = graph_edge_inverse_idx(g->edges_number, edge_idx);
+            avl_tree_remove(&g->adjacency_map, edge_idx);
+
+            g->edges_number -= 2;
+        }
     }
+    else {
+        while (g->adjacency_map.count) {
+            atn = g->adjacency_map.root;
+            edge_idx = atn->key;
 
-    if (atn->left)
-        remove_edge(g, atn->left, gep);
-    if (atn->right)
-        remove_edge(g, atn->right, gep);
+            if (gep) {
+                graph_edge_from_idx(g->vertices_number, atn->key, &from, &to);
+                gep(from, to, atn->data);
+            }
+
+            avl_tree_remove(&g->adjacency_map, edge_idx);
+
+            -- g->edges_number;
+        }
+    }
 }
 
 void graph_init(graph_t *g,
@@ -34,7 +58,7 @@ void graph_init(graph_t *g,
 void graph_deinit(graph_t *g, graph_edge_purger_t gep) {
     assert(g);
 
-    remove_edge(g, g->adjacency_map.root, gep);
+    remove_edges(g, gep);
 
     avl_tree_purge(&g->adjacency_map);
 }
