@@ -22,11 +22,11 @@ struct multigrid_graph {
 /**
  * Convert multigrid to graph.
  * Graph vertices will represent ungrided only grids.
- * Graph edge data will consist of two pointers
- * to neighbouring grids in graph_grid_edge_t.
+ * Graph vertex data will point to appropriate grid.
+ * Graph edge data will be equal NULL.
  *
- * The graph_grid_edge_t may be free'd upon removing
- * appropriate graph edge.
+ * Ungrided grids pointers will map to graph vertex
+ * number with \c multigrid_graph_t::grid_to_graph_vertex
  *
  * Resulting graph should be purged and free'd to clean
  * up used memroy.
