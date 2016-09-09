@@ -166,7 +166,7 @@ struct multigrid {
 };
 
 struct multilayer_multigrid {
-    const list_t *pictures; /* list of picture_t */
+    const list_t *pictures;     /* list of picture_t */
     const division_scheme_t *ds;
     grid_level_t max_level;
 
@@ -176,7 +176,8 @@ struct multilayer_multigrid {
     multigrid_t mg;             /* resulting multigrid */
 };
 
-/** Initialize multigrid structure.
+/**
+ * Initialize multigrid structure.
  * \param pic picture description
  * \param ds division scheme
  * \param max_level maximum level. The first undivided grids level.
@@ -190,7 +191,8 @@ void multigrid_init(multigrid_t *mg,
 void multigrid_purge(multigrid_t *mg);
 void multigrid_grid(multigrid_t *mg);
 
-/** Convert grid id to its path
+/**
+ * Convert grid id to its path
  * \param mg multigrid descriptor
  * \param id grid's id
  * \return \c list_t list with inplace allocation of \c scheme_division_t.
@@ -200,7 +202,8 @@ void multigrid_grid(multigrid_t *mg);
  */
 list_t multigrid_id_to_path(const multigrid_t *mg, grid_id_t id);
 
-/** Reverse for \c multigrid_id_to_path
+/**
+ * Reverse for \c multigrid_id_to_path
  */
 grid_id_t multigrid_path_to_id(const multigrid_t *mg, const list_t *path);
 
