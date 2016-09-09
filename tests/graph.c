@@ -8,45 +8,49 @@ void setup(void) {
     graph_edge_count_t i;
     graph_vertex_idx_t from, to;
     graph_edge_idx_t __attribute__((unused)) e;
+    void *vertices_data[10] = {
+        (void *)0, (void *)1, (void *)2, (void *)3, (void *)4,
+        (void *)5, (void *)6, (void *)7, (void *)8, (void *)9
+    };
 
-    graph_init(G, 10, DIRECTED);
+    graph_init(G, 10, vertices_data, DIRECTED);
 
     for (i = 0, from = 0, to = 1; i < 4; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 1, to = 2; i < 3; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 2, to = 1; i < 2; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 2, to = 4; i < 8; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 4, to = 3; i < 9; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 3, to = 5; i < 5; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 5, to = 6; i < 7; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 6, to = 7; i < 10; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 7, to = 0; i < 13; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 7, to = 8; i < 11; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 
     for (i = 0, from = 9, to = 8; i < 12; ++i)
-        e = graph_add_edge(G, from, to, (void *) (i + 1));
+        e = graph_add_update_edge(G, from, to, (void *) (i + 1));
 }
 
 void teardown(void) {
-    graph_deinit(G, NULL);
+    graph_deinit(G, NULL, NULL);
     G = NULL;
 }
 

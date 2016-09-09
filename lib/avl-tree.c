@@ -407,19 +407,26 @@ avl_tree_node_t *avl_tree_add_or_get(avl_tree_t *t, avl_tree_key_t k,
 }
 
 void *avl_tree_remove_get_data(avl_tree_t *t, avl_tree_key_t k) {
-    void *d = NULL;
-    bool removed = false;
+    bool removed;
+    return avl_tree_remove_get_data_signal(t, k, &removed);
+}
 
-    assert(t);
+void *avl_tree_remove_get_data_signal(avl_tree_t *t, avl_tree_key_t k,
+                                      bool *removed) {
+    void *d = NULL;
+
+    assert(t && removed);
 
 #if 0
     n = node_get(t->root, k);
     d = n->data;
 #endif
 
-    t->root = node_remove(t->root, k, &removed, &d);
+    *removed = false;
 
-    if (removed)
+    t->root = node_remove(t->root, k, removed, &d);
+
+    if (*removed)
         --t->count;
 
     return d;

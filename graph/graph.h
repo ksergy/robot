@@ -18,18 +18,27 @@ typedef uint32_t graph_vertex_idx_t;
 typedef uint64_t graph_edge_idx_t;
 typedef uint64_t graph_edge_count_t;
 
-typedef void (*graph_edge_purger_t)(graph_vertex_idx_t from,
+typedef void (*graph_edge_purger_t)(const graph_t const *g,
+                                    graph_vertex_idx_t from,
                                     graph_vertex_idx_t to,
                                     void *data);
+typedef void (*graph_vertex_purger_t)(const graph_t const *g,
+                                      graph_vertex_idx_t v,
+                                      void *data);
 
 struct graph {
     graph_vertex_idx_t vertices_number;
     graph_edge_count_t edges_number;
     bool directed;
 
-    /* TODO redo this data structure */
-    /* key = graph_edge_idx(from, to), data = node data ptr */
-    avl_tree_t adjacency_map;
+    /* vector of void pointers */
+    vector_t vertices_data;
+
+    /* vector of lists of graph_vertex_idx_t */
+    vector_t adjacency_list;
+
+    /* key: edge_idx, data: edge data pointer */
+    avl_tree_t edges;
 };
 
 struct graph_edge_found {
@@ -39,21 +48,30 @@ struct graph_edge_found {
 
 void graph_init(graph_t *g,
                 graph_vertex_idx_t vertices_number,
+                void **vertices_data,
                 bool directed);
-void graph_deinit(graph_t *g, graph_edge_purger_t gep);
+void graph_deinit(graph_t *g,
+                  graph_edge_purger_t gep,
+                  graph_vertex_purger_t gvp);
 
-graph_edge_idx_t graph_add_edge(graph_t *g,
-                                graph_vertex_idx_t from, graph_vertex_idx_t to,
-                                void *node_data);
+void *graph_vertex_data(const graph_t const *gr, graph_vertex_idx_t v);
+void *graph_edge_data(const graph_t const *gr,
+                      graph_vertex_idx_t from, graph_vertex_idx_t to);
+void *graph_edge_idx_data(const graph_t const *gr,
+                          graph_edge_idx_t edge);
+
+graph_edge_idx_t graph_add_update_edge(graph_t *g,
+                                       graph_vertex_idx_t from, graph_vertex_idx_t to,
+                                       void *edge_data);
 graph_edge_found_t graph_remove_edge(graph_t *g,
                                      graph_vertex_idx_t from,
                                      graph_vertex_idx_t to);
 graph_edge_found_t graph_remove_edge_idx(graph_t *g,
                                          graph_edge_idx_t idx);
-graph_edge_found_t graph_test_edge(graph_t *g,
+graph_edge_found_t graph_test_edge(const graph_t const *g,
                                    graph_vertex_idx_t from,
                                    graph_vertex_idx_t to);
-graph_edge_found_t graph_test_edge_idx(graph_t *g,
+graph_edge_found_t graph_test_edge_idx(const graph_t const *g,
                                        graph_edge_idx_t idx);
 
 static inline

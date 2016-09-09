@@ -10,17 +10,36 @@ struct T {
     graph_vertex_idx_t to;
 };
 
-void check_node(avl_tree_node_t *atn, graph_t *gr) {
+void check_node(avl_tree_node_t *atn, multigrid_t *mg, multigrid_graph_t *mg_g) {
     struct T *t = atn->data;
-    ck_assert_int_eq(graph_test_edge(gr, t->from, t->to).found, true);
 
-    free(graph_remove_edge(gr, t->from, t->to).data);
+    avl_tree_node_t *atn_from, *atn_to;
+    graph_vertex_idx_t from, to;
+
+    atn_from = avl_tree_get(
+        &mg_g->grid_to_graph_vertex,
+        (avl_tree_key_t)multigrid_get_grid(mg, t->from)
+    );
+
+    atn_to = avl_tree_get(
+        &mg_g->grid_to_graph_vertex,
+        (avl_tree_key_t)multigrid_get_grid(mg, t->to)
+    );
+
+    from = *(graph_vertex_idx_t *)atn_from->data;
+    to = *(graph_vertex_idx_t *)atn_to->data;
+
+    graph_edge_found_t gef = graph_remove_edge(&mg_g->graph, from, to);
+
+    ck_assert_int_eq(gef.found, true);
+
+    free(gef.data);
 
     if (atn->left)
-        check_node(atn->left, gr);
+        check_node(atn->left, mg, mg_g);
 
     if (atn->right)
-        check_node(atn->right, gr);
+        check_node(atn->right, mg, mg_g);
 }
 
 START_TEST(test_multigrid_converter_ok) {
@@ -35,7 +54,7 @@ do {                                                                            
 } while(0)
 
     multigrid_t mg;
-    graph_t *gr;
+    multigrid_graph_t *mg_g;
     avl_tree_t TST;
 
     multigrid_init(
@@ -199,13 +218,13 @@ do {                                                                            
     NEIGHBOURS(1541, 1548);
     }
 
-    gr = multigrid_to_graph(&mg);
+    mg_g = multigrid_to_graph(&mg);
 
-    check_node(TST.root, gr);
+    check_node(TST.root, &mg, mg_g);
 
-    ck_assert_int_eq(gr->edges_number, 0);
+    ck_assert_int_eq(mg_g->graph.edges_number, 0);
 
-    multigrid_purge_graph(gr);
+    multigrid_purge_graph(mg_g);
 
     avl_tree_purge(&TST);
 

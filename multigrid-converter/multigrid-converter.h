@@ -11,6 +11,14 @@ struct graph_grid_edge {
 
 typedef struct graph_grid_edge graph_grid_edge_t;
 
+struct multigrid_graph;
+typedef struct multigrid_graph multigrid_graph_t;
+
+struct multigrid_graph {
+    graph_t graph;
+    avl_tree_t grid_to_graph_vertex;
+};
+
 /**
  * Convert multigrid to graph.
  * Graph vertices will represent ungrided only grids.
@@ -23,8 +31,8 @@ typedef struct graph_grid_edge graph_grid_edge_t;
  * Resulting graph should be purged and free'd to clean
  * up used memroy.
  */
-graph_t *multigrid_to_graph(const multigrid_t *mg);
+multigrid_graph_t *multigrid_to_graph(const multigrid_t const *mg);
 
-void multigrid_purge_graph(graph_t *gr);
+void multigrid_purge_graph(multigrid_graph_t *mg_g);
 
 #endif /* _MULTIGRID_CONVERTOR_H_ */
