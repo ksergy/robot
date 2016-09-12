@@ -1,6 +1,8 @@
 #include "graph.h"
+#include "lib/set.h"
 
 #include <string.h>
+#include <stdlib.h>
 #include <assert.h>
 
 static void
@@ -49,6 +51,26 @@ undirect_edge(const graph_t const *g, graph_edge_idx_t *edge) {
         to = tmp;
         *edge = graph_edge_idx(g->vertices_number, from, to);
     }
+}
+
+static void
+arrangement_random(size_t *v, size_t num,
+                   uint64_t (*random_generator)(void *ptr),
+                   void *ptr) {
+    set_t used;
+    size_t r;
+    set_init(&used);
+
+    while (used.tree.count != num) {
+        r = random_generator(ptr) % num;
+
+        while (set_add(&used, r) > 1)
+            r = (r + 1) % num;
+
+        v[used.tree.count - 1] = r;
+    }
+
+    set_purge(&used);
 }
 
 void graph_init(graph_t *g,
@@ -297,4 +319,161 @@ graph_edge_found_t graph_test_edge_idx(const graph_t *g,
     return atn_edge
             ? (graph_edge_found_t){ .found = true, .data = atn_edge->data }
             : (graph_edge_found_t){ .found = false, .data = NULL };
+}
+
+#define DFS_BFS(marker)                                                         \
+    list_t queue;                                                               \
+    list_element_t *queue_element;                                              \
+    set_t used;                                                                 \
+    list_t *neighbours;                                                         \
+    list_element_t *neighbour;                                                  \
+                                                                                \
+    assert(g && from < g->vertices_number);                                     \
+                                                                                \
+    set_init(&used);                                                            \
+    list_init(&queue, true, sizeof(graph_vertex_idx_t));                        \
+                                                                                \
+    queue_element = list_append(&queue);                                        \
+    *(graph_vertex_idx_t *)queue_element->data = from;                          \
+                                                                                \
+    do {                                                                        \
+        queue_element = list_##marker(&queue);                                  \
+        from = *(graph_vertex_idx_t *)queue_element->data;                      \
+        list_remove_and_advance(&queue, queue_element);                         \
+                                                                                \
+        if (set_add(&used, from) > 1)                                           \
+            continue;                                                           \
+                                                                                \
+        if (runner && !runner(g, from, priv))                                   \
+            break;                                                              \
+                                                                                \
+        neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, from);\
+        for (neighbour = list_begin(neighbours);                                \
+             neighbour; neighbour = list_next(neighbours, neighbour))           \
+            *(graph_vertex_idx_t *)list_append(&queue)->data =                  \
+                *(graph_vertex_idx_t *)neighbour->data;                         \
+    } while(list_size(&queue));                                                 \
+                                                                                \
+    list_purge(&queue);                                                         \
+    set_purge(&used);
+
+void graph_bfs(const graph_t *g, graph_vertex_idx_t from,
+               graph_vertex_runner_t runner, void *priv) {
+    DFS_BFS(begin);
+}
+
+void graph_dfs(const graph_t *g,
+               graph_vertex_idx_t from,
+               graph_vertex_runner_t runner, void *priv) {
+    DFS_BFS(end);
+}
+
+#undef DFS_BFS
+
+list_t *graph_random_path(const graph_t *g,
+                          graph_vertex_idx_t from, graph_vertex_idx_t to,
+                          uint64_t (*random_generator)(void *ptr), void *ptr) {
+    list_t queue;
+    list_element_t *queue_element;
+    graph_vertex_idx_t v;
+    set_t used;
+    list_t *path;
+    list_t *neighbours;
+    list_element_t *neighbour;
+    vector_t neighbours_rearranged;
+    void **neighbour_rearranged, *neighbour_rearranged_idx;
+    vector_t arrangement;
+
+    assert(g && from < g->vertices_number && to < g->vertices_number);
+
+    path = malloc(sizeof(list_t));
+    list_init(path, true, sizeof(graph_vertex_idx_t));
+
+    set_init(&used);
+    list_init(&queue, true, sizeof(graph_vertex_idx_t));
+
+    *(graph_vertex_idx_t *)list_append(&queue)->data = from;
+
+    /* DFS */
+    do {
+        queue_element = list_end(&queue);
+        v = *(graph_vertex_idx_t *)queue_element->data;
+        list_remove_and_advance(&queue, queue_element);
+
+        if (set_add(&used, from) > 1)
+            continue;
+
+        *(graph_vertex_idx_t *)list_append(path)->data = v;
+
+        /* rearrange neighbours in random order */
+        neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, v);
+        vector_init(&neighbours_rearranged,
+                    sizeof(graph_vertex_idx_t *), list_size(neighbours));
+
+        for (neighbour = list_begin(neighbours),
+             neighbour_rearranged = (void **)neighbours_rearranged.data.data;
+             neighbour;
+             neighbour = list_next(neighbours, neighbour),
+             ++neighbour_rearranged)
+            *neighbour_rearranged = neighbour->data;
+
+        vector_init(&arrangement, sizeof(size_t),
+                    list_size(neighbours));
+
+        arrangement_random((size_t *)arrangement.data.data, list_size(neighbours),
+                           random_generator, ptr);
+
+        for (neighbour_rearranged_idx = vector_begin(&arrangement);
+             neighbour_rearranged_idx != vector_end(&arrangement);
+             neighbour_rearranged_idx = vector_next(
+                 &arrangement,
+                 neighbour_rearranged_idx))
+             *(graph_vertex_idx_t *)list_append(&queue)->data =
+                 *(graph_vertex_idx_t *)(*(void **)vector_get(
+                     &neighbours_rearranged,
+                     *(size_t *)neighbour_rearranged_idx));
+
+        vector_deinit(&arrangement);
+
+        vector_deinit(&neighbours_rearranged);
+    } while(list_size(&queue) && v != to);
+
+    list_purge(&queue);
+    set_purge(&used);
+
+    return path;
+}
+
+void graph_untie_path(const graph_t *g, list_t *path) {
+    vector_t used;
+    list_element_t *path_el, **prev_path_el_ptr, *remove_el;
+    graph_vertex_idx_t v;
+
+    assert(g && path);
+
+    if (list_size(path) < 2)
+        return;
+
+    vector_init(&used, sizeof(list_element_t *), list_size(path));
+    memset(used.data.data, 0, used.data.user_size);
+
+    for (path_el = list_begin(path);
+         path_el;) {
+        v = *(graph_vertex_idx_t *)path_el->data;
+        prev_path_el_ptr = (list_element_t **)vector_get(&used, v);
+
+        if (!(*prev_path_el_ptr)) {
+            *prev_path_el_ptr = path_el;
+            path_el = list_next(path, path_el);
+            continue;
+        }
+
+        for (remove_el = list_next(path, *prev_path_el_ptr);
+             remove_el && remove_el != path_el;)
+            remove_el = list_remove_and_advance(path, remove_el);
+
+        path_el = list_remove_and_advance(path, remove_el);
+    }
+
+    vector_deinit(&used);
 }

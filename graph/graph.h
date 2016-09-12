@@ -25,6 +25,9 @@ typedef void (*graph_edge_purger_t)(const graph_t const *g,
 typedef void (*graph_vertex_purger_t)(const graph_t const *g,
                                       graph_vertex_idx_t v,
                                       void *data);
+typedef bool (*graph_vertex_runner_t)(const graph_t const *g,
+                                      graph_vertex_idx_t v,
+                                      void *priv);
 
 struct graph {
     graph_vertex_idx_t vertices_number;
@@ -73,6 +76,18 @@ graph_edge_found_t graph_test_edge(const graph_t const *g,
                                    graph_vertex_idx_t to);
 graph_edge_found_t graph_test_edge_idx(const graph_t const *g,
                                        graph_edge_idx_t idx);
+
+void graph_bfs(const graph_t const *g, graph_vertex_idx_t from,
+               graph_vertex_runner_t runner, void *priv);
+void graph_dfs(const graph_t const *g, graph_vertex_idx_t from,
+               graph_vertex_runner_t runner, void *priv);
+
+list_t *graph_random_path(const graph_t const *g,
+                          graph_vertex_idx_t from,
+                          graph_vertex_idx_t to,
+                          uint64_t (*random_generator)(void *ptr),
+                          void *ptr);
+void graph_untie_path(const graph_t const *g, list_t *path);
 
 static inline
 graph_edge_idx_t graph_edge_idx(graph_vertex_idx_t __attribute__((unused)) total,
