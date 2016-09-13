@@ -374,6 +374,7 @@ void graph_dfs(const graph_t *g,
 list_t *graph_random_path(const graph_t *g,
                           graph_vertex_idx_t from, graph_vertex_idx_t to,
                           uint64_t (*random_generator)(void *ptr), void *ptr) {
+    /* TODO BFS + mix */
     list_t queue;
     list_element_t *queue_element;
     graph_vertex_idx_t v;
