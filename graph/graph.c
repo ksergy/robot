@@ -83,6 +83,7 @@ void graph_init(graph_t *g,
 
     g->directed = directed;
     g->vertices_number = vertices_number;
+    g->edges_number = 0;
 
     vector_init(&g->vertices_data, sizeof(void *), vertices_number);
     memcpy(g->vertices_data.data.data, vertices_data,
@@ -454,7 +455,7 @@ void graph_untie_path(const graph_t *g, list_t *path) {
     if (list_size(path) < 2)
         return;
 
-    vector_init(&used, sizeof(list_element_t *), list_size(path));
+    vector_init(&used, sizeof(list_element_t *), g->vertices_number);
     memset(used.data.data, 0, used.data.user_size);
 
     for (path_el = list_begin(path);

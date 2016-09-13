@@ -54,6 +54,39 @@ void teardown(void) {
     G = NULL;
 }
 
+void setup_algorithms(graph_t *g) {
+    void *vdata[10];
+    graph_init(g, 10, vdata, !GRAPH_DIRECTED);
+
+    graph_add_update_edge(g, 0, 3, (void *)1);
+    graph_add_update_edge(g, 0, 9, (void *)2);
+
+    graph_add_update_edge(g, 1, 2, (void *)3);
+    graph_add_update_edge(g, 1, 3, (void *)4);
+
+    graph_add_update_edge(g, 2, 8, (void *)5);
+    graph_add_update_edge(g, 2, 9, (void *)6);
+
+    graph_add_update_edge(g, 3, 4, (void *)7);
+    graph_add_update_edge(g, 3, 6, (void *)8);
+    graph_add_update_edge(g, 3, 9, (void *)9);
+
+    graph_add_update_edge(g, 4, 5, (void *)10);
+
+    graph_add_update_edge(g, 5, 6, (void *)11);
+    graph_add_update_edge(g, 5, 7, (void *)12);
+
+    graph_add_update_edge(g, 7, 8, (void *)13);
+
+    graph_add_update_edge(g, 8, 9, (void *)14);
+
+    ck_assert_int_eq(g->edges_number, 14);
+}
+
+void teardown_algorithms(graph_t *g) {
+    graph_deinit(g, NULL, NULL);
+}
+
 START_TEST(test_graph_directed_ok) {
     graph_t g;
 
@@ -298,6 +331,60 @@ START_TEST(test_graph_undirected_ok) {
 }
 END_TEST
 
+START_TEST(test_graph_bfs_dfs_ok) {
+    graph_t g;
+    setup_algorithms(&g);
+    ck_assert_int_ne(0,0);
+    teardown_algorithms(&g);
+}
+END_TEST
+
+START_TEST(test_graph_random_path_ok) {
+    graph_t g;
+    setup_algorithms(&g);
+    ck_assert_int_ne(0,0);
+    teardown_algorithms(&g);
+}
+END_TEST
+
+START_TEST(test_graph_untie_path_ok) {
+    graph_t g;
+    list_t path;
+    list_element_t *le_path;
+
+    setup_algorithms(&g);
+
+    list_init(&path, true, sizeof(graph_vertex_idx_t));
+    *(graph_vertex_idx_t *)list_append(&path)->data = 0;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 3;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 6;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 5;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 4;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 3;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 9;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 8;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 2;
+    *(graph_vertex_idx_t *)list_append(&path)->data = 9;
+
+    graph_untie_path(&g, &path);
+
+    ck_assert_int_eq(list_size(&path), 3);
+
+    le_path = list_begin(&path);
+    ck_assert_int_eq(*(graph_vertex_idx_t *)le_path->data, 0);
+
+    le_path = list_next(&path, le_path);
+    ck_assert_int_eq(*(graph_vertex_idx_t *)le_path->data, 3);
+
+    le_path = list_next(&path, le_path);
+    ck_assert_int_eq(*(graph_vertex_idx_t *)le_path->data, 9);
+
+    list_purge(&path);
+
+    teardown_algorithms(&g);
+}
+END_TEST
+
 Suite *graph_suite(void) {
     Suite *s = suite_create("graph");
     TCase *tc = tcase_create("directed multi");
@@ -309,6 +396,14 @@ Suite *graph_suite(void) {
     tc = tcase_create("undirected multi");
 
     tcase_add_test(tc, test_graph_undirected_ok);
+
+    suite_add_tcase(s, tc);
+
+    tc = tcase_create("algorithms");
+
+    tcase_add_test(tc, test_graph_bfs_dfs_ok);
+    tcase_add_test(tc, test_graph_random_path_ok);
+    tcase_add_test(tc, test_graph_untie_path_ok);
 
     suite_add_tcase(s, tc);
 
