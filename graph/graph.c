@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+/************************ private ************************/
 static void
 purge_edges(graph_t *g, graph_edge_purger_t gep) {
     graph_vertex_idx_t from, to;
@@ -73,6 +74,85 @@ arrangement_random(size_t *v, size_t num,
     set_purge(&used);
 }
 
+static
+void add_directed_edge_to_adjacency_list(graph_t *g,
+                                         graph_vertex_idx_t from,
+                                         graph_vertex_idx_t to) {
+    list_t *adj_list_from;
+    list_element_t *adj_from_to;
+
+    adj_list_from = (list_t *)vector_get(&g->adjacency_list, from);
+
+    for (adj_from_to = list_begin(adj_list_from);
+         adj_from_to && (*(graph_vertex_idx_t *)adj_from_to->data < to);
+         adj_from_to = list_next(adj_list_from, adj_from_to));
+
+    adj_from_to = list_prev(adj_list_from, adj_from_to);
+
+    if (!adj_from_to)
+        adj_from_to = list_prepend(adj_list_from);
+    else
+        adj_from_to = list_add_after(adj_list_from, adj_from_to);
+
+    *(graph_vertex_idx_t *)adj_from_to->data = to;
+}
+
+static
+void remove_directed_edge_from_adjacency_list(graph_t *g,
+                                              graph_vertex_idx_t from,
+                                              graph_vertex_idx_t to) {
+    list_t *adj_from;
+    list_element_t *adj_from_to;
+
+    adj_from = (list_t *)vector_get(&g->adjacency_list, from);
+    for (adj_from_to = list_begin(adj_from);
+         adj_from_to && (*(graph_vertex_idx_t *)adj_from_to->data != to);
+         adj_from_to = list_next(adj_from, adj_from_to));
+
+    list_remove_and_advance(adj_from, adj_from_to);
+}
+
+static inline
+void dfs_bfs(const graph_t *g, graph_vertex_idx_t from,
+             graph_vertex_runner_t runner, void *priv,
+             list_element_t *(*list_op)(list_t *)) {
+    list_t series;
+    list_element_t *next_element_in_series;
+    set_t used;
+    list_t *neighbours;
+    list_element_t *neighbour;
+
+    set_init(&used);
+    list_init(&series, true, sizeof(graph_vertex_idx_t));
+
+    next_element_in_series = list_append(&series);
+    *(graph_vertex_idx_t *)next_element_in_series->data = from;
+
+    do {
+        next_element_in_series = (*list_op)(&series);
+        from = *(graph_vertex_idx_t *)next_element_in_series->data;
+        list_remove_and_advance(&series, next_element_in_series);
+
+        if (set_add(&used, from) > 1)
+            continue;
+
+        if (runner && !runner(g, from, priv))
+            break;
+
+        neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, from);
+        for (neighbour = list_begin(neighbours);
+             neighbour; neighbour = list_next(neighbours, neighbour))
+            *(graph_vertex_idx_t *)list_append(&series)->data =
+                *(graph_vertex_idx_t *)neighbour->data;
+    } while(list_size(&series));
+
+    list_purge(&series);
+    set_purge(&used);
+
+    return;
+}
+
+/************************ API ************************/
 void graph_init(graph_t *g,
                 graph_vertex_idx_t vertices_number,
                 void **vertices_data,
@@ -126,26 +206,21 @@ void *graph_vertex_data(const graph_t const *gr, graph_vertex_idx_t v) {
 void *graph_edge_data(const graph_t const *gr,
                       graph_vertex_idx_t from, graph_vertex_idx_t to) {
     graph_edge_idx_t edge_idx;
-    graph_vertex_idx_t min, max;
     avl_tree_node_t *atn_edge;
 
     assert(gr);
 
     switch (gr->directed) {
-        case true:
-            edge_idx = graph_edge_idx(gr->vertices_number, from, to);
-            break;
         case false:
-            if (from < to) {
-                min = from;
-                max = to;
-            }
-            else {
-                max = to;
-                min = from;
+            if (from > to) {
+                graph_vertex_idx_t t;
+                t = from;
+                from = to;
+                to = t;
             }
 
-            edge_idx = graph_edge_idx(gr->vertices_number, min, max);
+        case true:
+            edge_idx = graph_edge_idx(gr->vertices_number, from, to);
             break;
     }
 
@@ -168,22 +243,20 @@ void *graph_edge_idx_data(const graph_t *gr, graph_edge_idx_t edge) {
 }
 
 graph_edge_idx_t graph_add_update_edge(graph_t *g,
-                                       graph_vertex_idx_t from, graph_vertex_idx_t to,
+                                       graph_vertex_idx_t from,
+                                       graph_vertex_idx_t to,
                                        void *edge_data) {
     bool inserted = false;
     graph_edge_idx_t e;
     avl_tree_node_t *atn_edge;
-    list_t *adj_list_from;
-    list_element_t *adj_from_to;
 
     assert(g);
 
-    if (!g->directed)
-        if (from > to) {
-            graph_vertex_idx_t t = from;
-            from = to;
-            to = t;
-        }
+    if (!g->directed && from > to) {
+        graph_vertex_idx_t t = from;
+        from = to;
+        to = t;
+    }
 
     e = graph_edge_idx(g->vertices_number, from, to);
     atn_edge = avl_tree_add_or_get(&g->edges, e, &inserted);
@@ -195,22 +268,17 @@ graph_edge_idx_t graph_add_update_edge(graph_t *g,
 
     atn_edge->data = edge_data;
 
-    adj_list_from = (list_t *)vector_get(&g->adjacency_list, from);
+    switch (g->directed) {
+        case false:
+            add_directed_edge_to_adjacency_list(g, to, from);
 
-    for (adj_from_to = list_begin(adj_list_from);
-         adj_from_to && (*(graph_vertex_idx_t *)adj_from_to->data < to);
-         adj_from_to = list_next(adj_list_from, adj_from_to));
-
-    adj_from_to = list_prev(adj_list_from, adj_from_to);
-
-    if (!adj_from_to)
-        adj_from_to = list_prepend(adj_list_from);
-    else
-        adj_from_to = list_add_after(adj_list_from, adj_from_to);
+        case true:
+            add_directed_edge_to_adjacency_list(g, from, to);
+            break;
+    }
 
     ++g->edges_number;
 
-    *(graph_vertex_idx_t *)adj_from_to->data = to;
     return e;
 }
 
@@ -221,17 +289,14 @@ graph_edge_found_t graph_remove_edge(graph_t *g,
     void *edge_data;
     graph_vertex_idx_t from = _from, to = _to;
     bool removed = false;
-    list_t *adj_from;
-    list_element_t *adj_from_to;
 
     assert(g);
 
-    if (!g->directed)
-        if (from > to) {
-            graph_vertex_idx_t t = from;
-            from = to;
-            to = t;
-        }
+    if (!g->directed && from > to) {
+        graph_vertex_idx_t t = from;
+        from = to;
+        to = t;
+    }
 
     e = graph_edge_idx(g->vertices_number, from, to);
     edge_data = avl_tree_remove_get_data_signal(&g->edges, e, &removed);
@@ -239,12 +304,14 @@ graph_edge_found_t graph_remove_edge(graph_t *g,
     if (!removed)
         return (graph_edge_found_t){ .found = false, .data = NULL };
 
-    adj_from = (list_t *)vector_get(&g->adjacency_list, from);
-    for (adj_from_to = list_begin(adj_from);
-         adj_from_to && (*(graph_vertex_idx_t *)adj_from_to->data != to);
-         adj_from_to = list_next(adj_from, adj_from_to));
+    switch (g->directed) {
+        case false:
+            remove_directed_edge_from_adjacency_list(g, to, from);
 
-    list_remove_and_advance(adj_from, adj_from_to);
+        case true:
+            remove_directed_edge_from_adjacency_list(g, from, to);
+            break;
+    }
 
     --g->edges_number;
 
@@ -255,8 +322,6 @@ graph_edge_found_t graph_remove_edge_idx(graph_t *g, graph_edge_idx_t idx) {
     void *edge_data;
     graph_vertex_idx_t from, to;
     bool removed = false;
-    list_t *adj_from;
-    list_element_t *adj_from_to;
 
     assert(g);
 
@@ -270,12 +335,14 @@ graph_edge_found_t graph_remove_edge_idx(graph_t *g, graph_edge_idx_t idx) {
     if (!removed)
         return (graph_edge_found_t){ .found = false, .data = NULL };
 
-    adj_from = (list_t *)vector_get(&g->adjacency_list, from);
-    for (adj_from_to = list_begin(adj_from);
-         adj_from_to && (*(graph_vertex_idx_t *)adj_from_to->data != to);
-    adj_from_to = list_next(adj_from, adj_from_to));
+    switch (g->directed) {
+        case false:
+            remove_directed_edge_from_adjacency_list(g, to, from);
 
-    list_remove_and_advance(adj_from, adj_from_to);
+        case true:
+            remove_directed_edge_from_adjacency_list(g, from, to);
+            break;
+    }
 
     --g->edges_number;
 
@@ -290,12 +357,11 @@ graph_edge_found_t graph_test_edge(const graph_t *g,
 
     assert(g);
 
-    if (!g->directed)
-        if (from > to) {
-            graph_vertex_idx_t t = from;
-            from = to;
-            to = t;
-        }
+    if (!g->directed && from > to) {
+        graph_vertex_idx_t t = from;
+        from = to;
+        to = t;
+    }
 
     e = graph_edge_idx(g->vertices_number, from, to);
 
@@ -322,54 +388,20 @@ graph_edge_found_t graph_test_edge_idx(const graph_t *g,
             : (graph_edge_found_t){ .found = false, .data = NULL };
 }
 
-#define DFS_BFS(marker)                                                         \
-    list_t queue;                                                               \
-    list_element_t *queue_element;                                              \
-    set_t used;                                                                 \
-    list_t *neighbours;                                                         \
-    list_element_t *neighbour;                                                  \
-                                                                                \
-    assert(g && from < g->vertices_number);                                     \
-                                                                                \
-    set_init(&used);                                                            \
-    list_init(&queue, true, sizeof(graph_vertex_idx_t));                        \
-                                                                                \
-    queue_element = list_append(&queue);                                        \
-    *(graph_vertex_idx_t *)queue_element->data = from;                          \
-                                                                                \
-    do {                                                                        \
-        queue_element = list_##marker(&queue);                                  \
-        from = *(graph_vertex_idx_t *)queue_element->data;                      \
-        list_remove_and_advance(&queue, queue_element);                         \
-                                                                                \
-        if (set_add(&used, from) > 1)                                           \
-            continue;                                                           \
-                                                                                \
-        if (runner && !runner(g, from, priv))                                   \
-            break;                                                              \
-                                                                                \
-        neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, from);\
-        for (neighbour = list_begin(neighbours);                                \
-             neighbour; neighbour = list_next(neighbours, neighbour))           \
-            *(graph_vertex_idx_t *)list_append(&queue)->data =                  \
-                *(graph_vertex_idx_t *)neighbour->data;                         \
-    } while(list_size(&queue));                                                 \
-                                                                                \
-    list_purge(&queue);                                                         \
-    set_purge(&used);
-
 void graph_bfs(const graph_t *g, graph_vertex_idx_t from,
                graph_vertex_runner_t runner, void *priv) {
-    DFS_BFS(begin);
+    assert(g && from < g->vertices_number);
+
+    dfs_bfs(g, from, runner, priv, list_begin);
 }
 
 void graph_dfs(const graph_t *g,
                graph_vertex_idx_t from,
                graph_vertex_runner_t runner, void *priv) {
-    DFS_BFS(end);
-}
+    assert(g && from < g->vertices_number);
 
-#undef DFS_BFS
+    dfs_bfs(g, from, runner, priv, list_end);
+}
 
 list_t *graph_random_path(const graph_t *g,
                           graph_vertex_idx_t from, graph_vertex_idx_t to,

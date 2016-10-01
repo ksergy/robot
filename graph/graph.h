@@ -37,10 +37,16 @@ struct graph {
     /* vector of void pointers */
     vector_t vertices_data;
 
-    /* vector of lists of graph_vertex_idx_t */
+    /*
+     * vector of lists of graph_vertex_idx_t
+     * (duplicates data for undirected graph)
+     */
     vector_t adjacency_list;
 
-    /* key: edge_idx, data: edge data pointer */
+    /*
+     * key: edge_idx, data: edge data pointer
+     * (does not duplicate data for undirected graph)
+     */
     avl_tree_t edges;
 };
 
