@@ -8,15 +8,9 @@ typedef struct {
     /* vector of sets of neighbours */
     vector_t neighbours;
 
-    list_t queue;
-} bfs_checker_t;
+    list_t series;
+} bfs_dfs_checker_t;
 
-typedef struct {
-    /* vector of sets of neighbours */
-    vector_t neighbours;
-    /* stack of vertices */
-    list_t stack;
-} dfs_checker_t;
 
 graph_t *G = NULL;
 bool DIRECTED;
@@ -350,7 +344,7 @@ END_TEST
 
 static
 bool check_bfs(const graph_t const *g, graph_vertex_idx_t v,
-               bfs_checker_t *checker) {
+               bfs_dfs_checker_t *checker) {
     graph_vertex_idx_t idx;
 
     fprintf(
@@ -358,15 +352,15 @@ bool check_bfs(const graph_t const *g, graph_vertex_idx_t v,
         "Enqueue %llu\n",
         (long long unsigned int)v
     );
-    *(graph_vertex_idx_t *)(list_append(&checker->queue)->data) = v;
+    *(graph_vertex_idx_t *)(list_append(&checker->series)->data) = v;
 
-    if (*(graph_vertex_idx_t *)(list_begin(&checker->queue)->data) != v) {
+    if (*(graph_vertex_idx_t *)(list_begin(&checker->series)->data) != v) {
         ck_assert_int_gt(
             set_count(
                 (set_t *)
                 vector_get(&checker->neighbours,
                            *(graph_vertex_idx_t *)
-                           (list_begin(&checker->queue)->data)),
+                           (list_begin(&checker->series)->data)),
                       v),
                       0
         );
@@ -376,27 +370,27 @@ bool check_bfs(const graph_t const *g, graph_vertex_idx_t v,
             "  Neighbour %llu of %llu (%llu)\n",
                 (long long unsigned int)v,
                 (long long unsigned int)(*(graph_vertex_idx_t *)
-                                         (list_begin(&checker->queue)->data)),
+                                         (list_begin(&checker->series)->data)),
                 (long long unsigned int)set_count(
                     (set_t *)vector_get(&checker->neighbours,
                                         *(graph_vertex_idx_t *)
-                                        (list_begin(&checker->queue)->data)),
+                                        (list_begin(&checker->series)->data)),
                     v
                 )
         );
 
         if (1 == set_size((set_t *)vector_get(&checker->neighbours,
                           *(graph_vertex_idx_t *)
-                          (list_begin(&checker->queue)->data)))) {
+                          (list_begin(&checker->series)->data)))) {
             fprintf(
                 stderr,
                 "   Dequeue %llu\n",
                 (long long unsigned int)
-                *(graph_vertex_idx_t *)(list_begin(&checker->queue)->data)
+                *(graph_vertex_idx_t *)(list_begin(&checker->series)->data)
             );
 
-            list_remove_and_advance(&checker->queue,
-                                    list_begin(&checker->queue));
+            list_remove_and_advance(&checker->series,
+                                    list_begin(&checker->series));
 
         }   /* if (1 == set_size((set_t *)vector_get(&checker->neighbours, */
     }   /* if (*(graph_vertex_idx_t *)(list_begin(&checker->queue)->data) != v) */
@@ -407,18 +401,18 @@ bool check_bfs(const graph_t const *g, graph_vertex_idx_t v,
     for (; idx < g->vertices_number; ++idx)
         set_remove((set_t *)vector_get(&checker->neighbours, idx), v);
 
-    while (list_begin(&checker->queue) &&
+    while (list_begin(&checker->series) &&
            0 == set_size((set_t *)vector_get(&checker->neighbours,
                          *(graph_vertex_idx_t *)
-                         (list_begin(&checker->queue)->data)))) {
+                         (list_begin(&checker->series)->data)))) {
         fprintf(
             stderr,
             "   Dequeue %llu\n",
             (long long unsigned int)
-            *(graph_vertex_idx_t *)(list_begin(&checker->queue)->data)
+            *(graph_vertex_idx_t *)(list_begin(&checker->series)->data)
         );
 
-        list_remove_and_advance(&checker->queue, list_begin(&checker->queue));
+        list_remove_and_advance(&checker->series, list_begin(&checker->series));
     }   /* while (list_begin(&checker->queue) && */
 
     return true;
@@ -428,7 +422,7 @@ START_TEST(test_graph_bfs_ok) {
     static const graph_vertex_idx_t INITIAL = 0;
 
     graph_t g;
-    bfs_checker_t bfs_checker;
+    bfs_dfs_checker_t bfs_checker;
     graph_vertex_idx_t v;
     list_t *adj_list;
     list_element_t *adj_v;
@@ -448,9 +442,11 @@ START_TEST(test_graph_bfs_ok) {
             );
     }
 
-    list_init(&bfs_checker.queue, true, sizeof(graph_vertex_idx_t));
+    list_init(&bfs_checker.series, true, sizeof(graph_vertex_idx_t));
 
     graph_bfs(&g, INITIAL, (graph_vertex_runner_t)check_bfs, &bfs_checker);
+
+    ck_assert_int_eq(list_size(&bfs_checker.series), 0);
 
     for (v = 0; v < g.vertices_number; ++v)
         ck_assert_int_eq(
@@ -460,16 +456,136 @@ START_TEST(test_graph_bfs_ok) {
         set_purge((set_t *)vector_get(&bfs_checker.neighbours, v));
 
     vector_deinit(&bfs_checker.neighbours);
-    list_purge(&bfs_checker.queue);
+    list_purge(&bfs_checker.series);
 
     teardown_algorithms(&g);
 }
 END_TEST
 
+static
+bool check_dfs(const graph_t const *g, graph_vertex_idx_t v,
+               bfs_dfs_checker_t *checker) {
+    graph_vertex_idx_t idx;
+    list_element_t *last_el;
+
+    fprintf(
+        stderr,
+        "Check %llu\n",
+        (long long unsigned int)v
+    );
+
+    last_el = list_end(&checker->series);
+
+    if (last_el &&
+        v != *(graph_vertex_idx_t *)(last_el->data)) {
+        ck_assert_int_gt(
+            set_count(
+                (set_t *)
+                vector_get(&checker->neighbours,
+                           *(graph_vertex_idx_t *)
+                           (list_end(&checker->series)->data)),
+                      v),
+            0
+        );
+
+        fprintf(
+            stderr,
+            "  Neighbour %llu of %llu (%llu)\n",
+                (long long unsigned int)v,
+                (long long unsigned int)(*(graph_vertex_idx_t *)
+                                         (list_end(&checker->series)->data)),
+                (long long unsigned int)set_count(
+                    (set_t *)vector_get(&checker->neighbours,
+                                        *(graph_vertex_idx_t *)
+                                        (list_end(&checker->series)->data)),
+                    v
+                )
+        );
+    }
+
+    for (idx = 0; idx < v; ++idx)
+        set_remove((set_t *)vector_get(&checker->neighbours, idx), v);
+
+    for (; idx < g->vertices_number; ++idx)
+        set_remove((set_t *)vector_get(&checker->neighbours, idx), v);
+
+    while (list_end(&checker->series) &&
+           0 == set_size((set_t *)vector_get(&checker->neighbours,
+                         *(graph_vertex_idx_t *)
+                         (list_end(&checker->series)->data)))) {
+        fprintf(
+            stderr,
+            "   Dequeue %llu\n",
+            (long long unsigned int)
+            *(graph_vertex_idx_t *)(list_end(&checker->series)->data)
+        );
+
+        list_remove_and_advance(&checker->series, list_end(&checker->series));
+    }
+
+    fprintf(
+        stderr,
+        " Enqueue %llu\n",
+        (long long unsigned int)v
+    );
+    *(graph_vertex_idx_t *)(list_append(&checker->series)->data) = v;
+
+    if (0 == set_size((set_t *)vector_get(&checker->neighbours,
+                      *(graph_vertex_idx_t *)
+                      (list_end(&checker->series)->data)))) {
+        fprintf(
+            stderr,
+            "   Dequeue %llu\n",
+            (long long unsigned int)
+            *(graph_vertex_idx_t *)(list_end(&checker->series)->data)
+        );
+
+        list_remove_and_advance(&checker->series, list_end(&checker->series));
+    }
+
+    return true;
+}
+
 START_TEST(test_graph_dfs_ok) {
+    static const graph_vertex_idx_t INITIAL = 0;
+
     graph_t g;
+    bfs_dfs_checker_t dfs_checker;
+    graph_vertex_idx_t v;
+    list_t *adj_list;
+    list_element_t *adj_v;
+
     setup_algorithms(&g);
-    ck_assert_int_ne(0,0);
+
+    vector_init(&dfs_checker.neighbours, sizeof(set_t), g.vertices_number);
+    for (v = 0; v < g.vertices_number; ++v) {
+        set_init((set_t *)vector_get(&dfs_checker.neighbours, v));
+
+        adj_list = vector_get(&g.adjacency_list, v);
+        for (adj_v = list_begin(adj_list); adj_v;
+             adj_v = list_next(adj_list, adj_v))
+            set_add_single(
+                (set_t *)vector_get(&dfs_checker.neighbours, v),
+                *(graph_vertex_idx_t *)(adj_v->data)
+            );
+    }
+
+    list_init(&dfs_checker.series, true, sizeof(graph_vertex_idx_t));
+
+    graph_dfs(&g, INITIAL, (graph_vertex_runner_t)check_dfs, &dfs_checker);
+
+    ck_assert_int_eq(list_size(&dfs_checker.series), 0);
+
+    for (v = 0; v < g.vertices_number; ++v)
+        ck_assert_int_eq(
+            set_size((set_t *)vector_get(&dfs_checker.neighbours, v)), 0);
+
+    for (v = 0; v < g.vertices_number; ++v)
+        set_purge((set_t *)vector_get(&dfs_checker.neighbours, v));
+
+    vector_deinit(&dfs_checker.neighbours);
+    list_purge(&dfs_checker.series);
+
     teardown_algorithms(&g);
 }
 END_TEST
