@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <assert.h>
 
 /************************ private ************************/
@@ -512,4 +513,27 @@ void graph_untie_path(const graph_t *g, list_t *path) {
     }
 
     vector_deinit(&used);
+}
+
+void graph_init_default_random_generator(graph_drg_ctx_t *ctx) {
+    int ret;
+
+    assert(ctx);
+
+    ret = initstate_r(time(NULL), ctx->state, sizeof(ctx->state), &ctx->rd);
+
+    assert(0 == ret);
+}
+
+uint64_t graph_default_random_generator(graph_drg_ctx_t *ctx) {
+    int ret;
+    int32_t v;
+
+    assert (ctx);
+
+    ret = random_r(&ctx->rd, &v);
+
+    assert(!ret);
+
+    return (uint64_t)v;
 }

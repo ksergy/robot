@@ -5,6 +5,7 @@
 # include "lib/avl-tree.h"
 
 # include <stdbool.h>
+# include <stdlib.h>
 
 # define GRAPH_DIRECTED true
 
@@ -13,6 +14,9 @@ typedef struct graph graph_t;
 
 struct graph_edge_found;
 typedef struct graph_edge_found graph_edge_found_t;
+
+struct graph_default_random_generator_ctx;
+typedef struct graph_default_random_generator_ctx graph_drg_ctx_t;
 
 typedef uint32_t graph_vertex_idx_t;
 typedef uint64_t graph_edge_idx_t;
@@ -53,6 +57,11 @@ struct graph {
 struct graph_edge_found {
     bool found;
     void *data;
+};
+
+struct graph_default_random_generator_ctx {
+    struct random_data rd;
+    char state[512];
 };
 
 void graph_init(graph_t *g,
@@ -114,5 +123,8 @@ graph_edge_idx_t graph_edge_inverse_idx(graph_vertex_idx_t __attribute__((unused
                                         graph_edge_idx_t idx) {
     return ((idx & 0xffffffff) << 0x20) | ((idx >> 0x20) & 0xffffffff);
 }
+
+void graph_init_default_random_generator(graph_drg_ctx_t *ctx);
+uint64_t graph_default_random_generator(graph_drg_ctx_t *ctx);
 
 #endif /* _GRAPH_H_ */
