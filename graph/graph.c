@@ -133,7 +133,7 @@ void dfs_bfs(const graph_t *g, graph_vertex_idx_t from,
         from = *(graph_vertex_idx_t *)next_element_in_series->data;
         list_remove_and_advance(&series, next_element_in_series);
 
-        if (set_add(&used, from) > 1)
+        if (set_add(&used, from) > 0)
             continue;
 
         if (runner && !runner(g, from, priv))
@@ -142,9 +142,9 @@ void dfs_bfs(const graph_t *g, graph_vertex_idx_t from,
         neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, from);
         for (neighbour = list_begin(neighbours);
              neighbour; neighbour = list_next(neighbours, neighbour))
-            *(graph_vertex_idx_t *)list_append(&series)->data =
+            *(graph_vertex_idx_t *)(list_append(&series)->data) =
                 *(graph_vertex_idx_t *)neighbour->data;
-    } while(list_size(&series));
+    } while (list_size(&series));
 
     list_purge(&series);
     set_purge(&used);
@@ -191,6 +191,8 @@ void graph_deinit(graph_t *g,
 
     for (idx = 0; idx < g->vertices_number; ++idx)
         list_purge((list_t *)vector_get(&g->adjacency_list, idx));
+
+    vector_deinit(&g->adjacency_list);
 
     avl_tree_purge(&g->edges);
 }
