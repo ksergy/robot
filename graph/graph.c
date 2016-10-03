@@ -177,12 +177,14 @@ void dfs(const graph_t *g, graph_vertex_idx_t from,
 
     next_element_in_series = list_append(series);
     *(graph_vertex_idx_t *)next_element_in_series->data = from;
-    set_add(&used, from);
 
     do {
         next_element_in_series = (*list_op)(series);
         from = *(graph_vertex_idx_t *)next_element_in_series->data;
         list_remove_and_advance(series, next_element_in_series);
+
+        if (set_add(&used, from) > 0)
+            continue;
 
         if (runner && !runner(g, from, parent, distance, priv))
             break;
@@ -192,7 +194,7 @@ void dfs(const graph_t *g, graph_vertex_idx_t from,
              neighbour; neighbour = list_next(neighbours, neighbour)) {
             graph_vertex_idx_t v = *(graph_vertex_idx_t *)neighbour->data;
 
-            if (set_add(&used, v) > 0)
+            if (set_count(&used, v) > 0)
                 continue;
 
             *(graph_vertex_idx_t *)(list_append(series)->data) = v;
