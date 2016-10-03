@@ -55,7 +55,7 @@ undirect_edge(const graph_t const *g, graph_edge_idx_t *edge) {
     }
 }
 
-static void
+static void __attribute__((unused))
 arrangement_random(size_t *v, size_t num,
                    uint64_t (*random_generator)(void *ptr),
                    void *ptr) {
@@ -114,11 +114,11 @@ void remove_directed_edge_from_adjacency_list(graph_t *g,
 }
 
 static inline
-void dfs_bfs(const graph_t *g, graph_vertex_idx_t from,
-             graph_vertex_runner_t runner, void *priv,
-             list_t *series,
-             vector_t *parent, vector_t *distance,
-             list_element_t *(*list_op)(list_t *)) {
+void bfs(const graph_t *g, graph_vertex_idx_t from,
+         vector_t *parent, vector_t *distance,
+         graph_vertex_runner_t runner, void *priv,
+         list_t *series,
+         list_element_t *(*list_op)(list_t *)) {
     list_element_t *next_element_in_series;
     set_t used;
     list_t *neighbours;
@@ -131,14 +131,12 @@ void dfs_bfs(const graph_t *g, graph_vertex_idx_t from,
 
     next_element_in_series = list_append(series);
     *(graph_vertex_idx_t *)next_element_in_series->data = from;
+    set_add(&used, from);
 
     do {
         next_element_in_series = (*list_op)(series);
         from = *(graph_vertex_idx_t *)next_element_in_series->data;
         list_remove_and_advance(series, next_element_in_series);
-
-        if (set_add(&used, from) > 0)
-            continue;
 
         if (runner && !runner(g, from, parent, distance, priv))
             break;
@@ -146,25 +144,66 @@ void dfs_bfs(const graph_t *g, graph_vertex_idx_t from,
         neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, from);
         for (neighbour = list_begin(neighbours);
              neighbour; neighbour = list_next(neighbours, neighbour)) {
-            *(graph_vertex_idx_t *)(list_append(series)->data) =
-                *(graph_vertex_idx_t *)neighbour->data;
-            *(graph_vertex_idx_t *)
-            vector_get(
-                parent,
-                *(graph_vertex_idx_t *)neighbour->data
-            ) = from;
+            graph_vertex_idx_t v = *(graph_vertex_idx_t *)neighbour->data;
+            if (set_add(&used, v) > 0)
+                continue;
 
-            *(graph_vertex_idx_t *)
-            vector_get(
-                distance,
-                *(graph_vertex_idx_t *)neighbour->data
-            ) = *(graph_vertex_idx_t *)vector_get(distance, from) + 1;
-        }
+            *(graph_vertex_idx_t *)(list_append(series)->data) = v;
+            *(graph_vertex_idx_t *)vector_get(parent,v) = from;
+
+            *(graph_vertex_idx_t *)vector_get(distance, v) =
+            *(graph_vertex_idx_t *)vector_get(distance, from) + 1;
+        }   /* for (neighbour = list_begin(neighbours); */
     } while (list_size(series));
 
     set_purge(&used);
+}
 
-    return;
+static inline
+void dfs(const graph_t *g, graph_vertex_idx_t from,
+         vector_t *parent, vector_t *distance,
+         graph_vertex_runner_t runner, void *priv,
+         list_t *series,
+         list_element_t *(*list_op)(list_t *)) {
+    list_element_t *next_element_in_series;
+    set_t used;
+    list_t *neighbours;
+    list_element_t *neighbour;
+
+    set_init(&used);
+
+    *(graph_vertex_idx_t *)vector_get(parent, from) = (graph_vertex_idx_t)(-1);
+    *(graph_vertex_idx_t *)vector_get(distance, from) = 0;
+
+    next_element_in_series = list_append(series);
+    *(graph_vertex_idx_t *)next_element_in_series->data = from;
+    set_add(&used, from);
+
+    do {
+        next_element_in_series = (*list_op)(series);
+        from = *(graph_vertex_idx_t *)next_element_in_series->data;
+        list_remove_and_advance(series, next_element_in_series);
+
+        if (runner && !runner(g, from, parent, distance, priv))
+            break;
+
+        neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, from);
+        for (neighbour = list_begin(neighbours);
+             neighbour; neighbour = list_next(neighbours, neighbour)) {
+            graph_vertex_idx_t v = *(graph_vertex_idx_t *)neighbour->data;
+
+            if (set_add(&used, v) > 0)
+                continue;
+
+            *(graph_vertex_idx_t *)(list_append(series)->data) = v;
+            *(graph_vertex_idx_t *)vector_get(parent,v) = from;
+
+            *(graph_vertex_idx_t *)vector_get(distance, v) =
+            *(graph_vertex_idx_t *)vector_get(distance, from) + 1;
+        }   /* for (neighbour = list_begin(neighbours); */
+    } while (list_size(series));
+
+    set_purge(&used);
 }
 
 /************************ API ************************/
@@ -413,7 +452,7 @@ void graph_bfs(const graph_t *g, graph_vertex_idx_t from,
     list_t series;
     list_init(&series, true, sizeof(graph_vertex_idx_t));
 
-    dfs_bfs(g, from, runner, priv, &series, parent, distance, list_begin);
+    bfs(g, from, parent, distance, runner, priv, &series, list_begin);
 
     list_purge(&series);
 }
@@ -426,9 +465,17 @@ void graph_dfs(const graph_t *g, graph_vertex_idx_t from,
     list_t series;
     list_init(&series, true, sizeof(graph_vertex_idx_t));
 
-    dfs_bfs(g, from, runner, priv, &series, parent, distance, list_end);
+    dfs(g, from, parent, distance, runner, priv, &series, list_end);
 
     list_purge(&series);
+}
+
+static
+bool random_path_runner(const graph_t const *g,
+                        graph_vertex_idx_t v,
+                        vector_t *parent, vector_t *distance,
+                        const graph_vertex_idx_t const *target) {
+    return *target != v;
 }
 
 void graph_random_path(const graph_t *g,
@@ -438,20 +485,43 @@ void graph_random_path(const graph_t *g,
     /* TODO BFS + mix */
     /*
      * - BFS path from -> to (result = path1)
-     * - exclude some vertices of path1 from graph copy
+     * - exclude edges vertices of path1 from graph copy
      * - Do another BFS on resulted copy (result = path)
      */
 
+    vector_t distance, parent;
+    list_t series;
+    graph_vertex_idx_t v;
+
     assert(g && from < g->vertices_number && to < g->vertices_number);
 
-    /* TODO BFS path from -> to (result = path1) */
+    vector_init(&distance, sizeof(graph_vertex_idx_t), g->vertices_number);
+    vector_init(&parent, sizeof(graph_vertex_idx_t), g->vertices_number);
+    list_init(&series, true, sizeof(graph_vertex_idx_t));
 
-    /* TODO exclude some vertices of path1 from graph copy */
+    /* BFS path from -> to (result = path1) */
+    bfs(g, from,
+        &parent, &distance,
+        (graph_vertex_runner_t)random_path_runner, &to,
+        &series, list_end);
+
+    /* traceback 'parent' into path from -> to */
+    for (v = to; v != (graph_vertex_idx_t)-1;
+         v = *(graph_vertex_idx_t *)vector_get(&parent, v))
+        *(graph_vertex_idx_t *)(list_prepend(path)->data) = v;
+
+    /* at this point: path is BFS path from -> to */
+
+    /* TODO exclude some edges of path1 from graph copy */
 
     /* TODO Do another BFS on resulted copy (result = path) */
 
-    return;
+    list_purge(&series);
+    vector_deinit(&parent);
+    vector_deinit(&distance);
 
+    return;
+#if 0
     list_t queue;
     list_element_t *queue_element;
     graph_vertex_idx_t v;
@@ -517,6 +587,7 @@ void graph_random_path(const graph_t *g,
 
     list_purge(&queue);
     set_purge(&used);
+#endif
 }
 
 void graph_untie_path(const graph_t *g, list_t *path) {

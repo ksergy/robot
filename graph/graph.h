@@ -62,7 +62,7 @@ struct graph_edge_found {
 
 struct graph_default_random_generator_ctx {
     struct random_data rd;
-    char state[512];
+    char state[1024];
 };
 
 void graph_init(graph_t *g,
