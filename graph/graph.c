@@ -208,6 +208,23 @@ void dfs(const graph_t *g, graph_vertex_idx_t from,
     set_purge(&used);
 }
 
+static
+bool random_path_runner(const graph_t const *g,
+                        graph_vertex_idx_t v,
+                        vector_t *parent, vector_t *distance,
+                        const graph_vertex_idx_t const *target) {
+    return *target != v;
+}
+
+static
+bool coin_toss(uint64_t (*random_generator)(void *ptr), void *ptr) {
+    /*
+     * TODO employ some more sophisticated coin tossing algorithm
+     * e.g. use number of bits set, etc.
+     */
+    return (*random_generator)(ptr) & 0x01;
+}
+
 /************************ API ************************/
 void graph_init(graph_t *g,
                 graph_vertex_idx_t vertices_number,
@@ -470,23 +487,6 @@ void graph_dfs(const graph_t *g, graph_vertex_idx_t from,
     dfs(g, from, parent, distance, runner, priv, &series, list_end);
 
     list_purge(&series);
-}
-
-static
-bool random_path_runner(const graph_t const *g,
-                        graph_vertex_idx_t v,
-                        vector_t *parent, vector_t *distance,
-                        const graph_vertex_idx_t const *target) {
-    return *target != v;
-}
-
-static
-bool coin_toss(uint64_t (*random_generator)(void *ptr), void *ptr) {
-    /*
-     * TODO employ some more sophisticated coin tossing algorithm
-     * e.g. use number of bits set, etc.
-     */
-    return (*random_generator)(ptr) & 0x01;
 }
 
 void graph_random_path(const graph_t *g,
