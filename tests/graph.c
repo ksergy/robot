@@ -66,7 +66,7 @@ void teardown(void) {
 }
 
 void setup_algorithms(graph_t *g) {
-    void *vdata[10];
+    static void *vdata[10];
     graph_init(g, 10, vdata, !GRAPH_DIRECTED);
 
     graph_add_update_edge(g, 0, 3, (void *)1);
@@ -494,7 +494,8 @@ bool check_dfs(const graph_t const *g, graph_vertex_idx_t v,
                 vector_get(&checker->neighbours,
                            *(graph_vertex_idx_t *)
                            (list_end(&checker->series)->data)),
-                      v),
+                v
+            ),
             0
         );
 
@@ -628,6 +629,8 @@ START_TEST(test_graph_random_path_ok) {
         (uint64_t (*)(void *))graph_default_random_generator,
         &ctx
     );
+
+    ck_assert_int_gt(list_size(&path), 1);
 
     path_el1 = list_begin(&path);
 
