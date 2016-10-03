@@ -55,26 +55,6 @@ undirect_edge(const graph_t const *g, graph_edge_idx_t *edge) {
     }
 }
 
-static void __attribute__((unused))
-arrangement_random(size_t *v, size_t num,
-                   uint64_t (*random_generator)(void *ptr),
-                   void *ptr) {
-    set_t used;
-    size_t r;
-    set_init(&used);
-
-    while (used.tree.count != num) {
-        r = random_generator(ptr) % num;
-
-        while (set_add(&used, r) > 1)
-            r = (r + 1) % num;
-
-        v[used.tree.count - 1] = r;
-    }
-
-    set_purge(&used);
-}
-
 static
 void add_directed_edge_to_adjacency_list(graph_t *g,
                                          graph_vertex_idx_t from,
