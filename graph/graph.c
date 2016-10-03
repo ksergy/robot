@@ -480,11 +480,21 @@ bool random_path_runner(const graph_t const *g,
     return *target != v;
 }
 
+static
+bool coin_toss(uint64_t (*random_generator)(void *ptr), void *ptr) {
+    /*
+     * TODO employ some more sophisticated coin tossing algorithm
+     * e.g. use number of bits set, etc.
+     */
+    return (*random_generator)(ptr) & 0x01;
+}
+
 void graph_random_path(const graph_t *g,
                        graph_vertex_idx_t from, graph_vertex_idx_t to,
                        list_t *path,
                        uint64_t (*random_generator)(void *ptr), void *ptr) {
-    /* TODO BFS + mix */
+    static const graph_edge_idx_t LIMIT = 30,
+                                  NORM_FACTOR = 100;
     /*
      * - BFS path from -> to (result = path1)
      * - exclude edges vertices of path1 from graph copy
@@ -494,6 +504,10 @@ void graph_random_path(const graph_t *g,
     vector_t distance, parent;
     list_t series;
     graph_vertex_idx_t v;
+    list_element_t *vertex[2];
+    list_element_t *list_el;
+    graph_edge_idx_t removed;
+    graph_t g_copy;
 
     assert(g && from < g->vertices_number && to < g->vertices_number);
 
@@ -514,9 +528,86 @@ void graph_random_path(const graph_t *g,
 
     /* at this point: path is BFS path from -> to */
 
-    /* TODO exclude some edges of path1 from graph copy */
+    /* copy g to g_copy */
+    graph_init(
+        &g_copy,
+        g->vertices_number,
+        g->vertices_data.data.data,
+        g->directed
+    );
 
-    /* TODO Do another BFS on resulted copy (result = path) */
+    for (v = 0; v < g->vertices_number; ++v) {
+        list_t *adj_list = (list_t *)vector_get(
+            (vector_t *)&g->adjacency_list,
+            v
+        );
+
+        for (list_el = list_begin(adj_list); list_el;
+             list_el = list_next(adj_list, list_el))
+            graph_add_update_edge(
+                &g_copy,
+                v,
+                *(graph_vertex_idx_t *)(list_el->data),
+                NULL
+            );
+    }   /* for (v = 0; v < g->vertices_number; ++v) */
+
+    /* exclude some edges of path1 from graph copy */
+    for (removed = 0, vertex[0] = list_begin(path),
+         vertex[1] = list_next(path, vertex[0]);
+         vertex[1] && ((removed * NORM_FACTOR) / g->edges_number < LIMIT);
+         vertex[0] = vertex[1], vertex[1] = list_next(path, vertex[0])) {
+        if (2 > list_size(
+                   (list_t *)
+                   vector_get((vector_t *)&g->adjacency_list,
+                              *(graph_vertex_idx_t *)(vertex[0]->data))))
+            continue;
+
+        if (2 > list_size(
+                   (list_t *)
+                   vector_get((vector_t *)&g->adjacency_list,
+                              *(graph_vertex_idx_t *)(vertex[1]->data))))
+            continue;
+
+        if (!coin_toss(random_generator, ptr))
+            continue;
+
+        graph_remove_edge(
+            &g_copy,
+            *(graph_vertex_idx_t *)(vertex[0]->data),
+            *(graph_vertex_idx_t *)(vertex[1]->data)
+        );
+
+        ++removed;
+    }   /* for (vertex2 = list_next(path, vertex1); vertex2; */
+
+    /* Do another BFS on resulted copy (result = path) */
+    *(graph_vertex_idx_t *)vector_get(&parent, to) = -1;
+
+    bfs(&g_copy, from,
+        &parent, &distance,
+        (graph_vertex_runner_t)random_path_runner, &to,
+        &series, list_end);
+
+    if (-1 == *(graph_vertex_idx_t *)vector_get(&parent, to)) {
+        graph_deinit(&g_copy, NULL, NULL);
+
+        list_purge(&series);
+        vector_deinit(&parent);
+        vector_deinit(&distance);
+
+        return;
+    }
+
+    do {
+        list_el = list_remove_and_advance(path, list_begin(path));
+    } while (list_el);
+
+    for (v = to; v != (graph_vertex_idx_t)-1;
+         v = *(graph_vertex_idx_t *)vector_get(&parent, v))
+         *(graph_vertex_idx_t *)(list_prepend(path)->data) = v;
+
+    graph_deinit(&g_copy, NULL, NULL);
 
     list_purge(&series);
     vector_deinit(&parent);
