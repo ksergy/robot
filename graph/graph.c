@@ -116,38 +116,52 @@ void remove_directed_edge_from_adjacency_list(graph_t *g,
 static inline
 void dfs_bfs(const graph_t *g, graph_vertex_idx_t from,
              graph_vertex_runner_t runner, void *priv,
+             list_t *series,
+             vector_t *parent, vector_t *distance,
              list_element_t *(*list_op)(list_t *)) {
-    list_t series;
     list_element_t *next_element_in_series;
     set_t used;
     list_t *neighbours;
     list_element_t *neighbour;
 
     set_init(&used);
-    list_init(&series, true, sizeof(graph_vertex_idx_t));
 
-    next_element_in_series = list_append(&series);
+    *(graph_vertex_idx_t *)vector_get(parent, from) = (graph_vertex_idx_t)(-1);
+    *(graph_vertex_idx_t *)vector_get(distance, from) = 0;
+
+    next_element_in_series = list_append(series);
     *(graph_vertex_idx_t *)next_element_in_series->data = from;
 
     do {
-        next_element_in_series = (*list_op)(&series);
+        next_element_in_series = (*list_op)(series);
         from = *(graph_vertex_idx_t *)next_element_in_series->data;
-        list_remove_and_advance(&series, next_element_in_series);
+        list_remove_and_advance(series, next_element_in_series);
 
         if (set_add(&used, from) > 0)
             continue;
 
-        if (runner && !runner(g, from, priv))
+        if (runner && !runner(g, from, parent, distance, priv))
             break;
 
         neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, from);
         for (neighbour = list_begin(neighbours);
-             neighbour; neighbour = list_next(neighbours, neighbour))
-            *(graph_vertex_idx_t *)(list_append(&series)->data) =
+             neighbour; neighbour = list_next(neighbours, neighbour)) {
+            *(graph_vertex_idx_t *)(list_append(series)->data) =
                 *(graph_vertex_idx_t *)neighbour->data;
-    } while (list_size(&series));
+            *(graph_vertex_idx_t *)
+            vector_get(
+                parent,
+                *(graph_vertex_idx_t *)neighbour->data
+            ) = from;
 
-    list_purge(&series);
+            *(graph_vertex_idx_t *)
+            vector_get(
+                distance,
+                *(graph_vertex_idx_t *)neighbour->data
+            ) = *(graph_vertex_idx_t *)vector_get(distance, from) + 1;
+        }
+    } while (list_size(series));
+
     set_purge(&used);
 
     return;
@@ -392,18 +406,29 @@ graph_edge_found_t graph_test_edge_idx(const graph_t *g,
 }
 
 void graph_bfs(const graph_t *g, graph_vertex_idx_t from,
+               vector_t *parent, vector_t *distance,
                graph_vertex_runner_t runner, void *priv) {
-    assert(g && from < g->vertices_number);
+    assert(g && from < g->vertices_number && parent && distance);
 
-    dfs_bfs(g, from, runner, priv, list_begin);
+    list_t series;
+    list_init(&series, true, sizeof(graph_vertex_idx_t));
+
+    dfs_bfs(g, from, runner, priv, &series, parent, distance, list_begin);
+
+    list_purge(&series);
 }
 
-void graph_dfs(const graph_t *g,
-               graph_vertex_idx_t from,
+void graph_dfs(const graph_t *g, graph_vertex_idx_t from,
+               vector_t *parent, vector_t *distance,
                graph_vertex_runner_t runner, void *priv) {
     assert(g && from < g->vertices_number);
 
-    dfs_bfs(g, from, runner, priv, list_end);
+    list_t series;
+    list_init(&series, true, sizeof(graph_vertex_idx_t));
+
+    dfs_bfs(g, from, runner, priv, &series, parent, distance, list_end);
+
+    list_purge(&series);
 }
 
 void graph_random_path(const graph_t *g,
@@ -411,6 +436,22 @@ void graph_random_path(const graph_t *g,
                        list_t *path,
                        uint64_t (*random_generator)(void *ptr), void *ptr) {
     /* TODO BFS + mix */
+    /*
+     * - BFS path from -> to (result = path1)
+     * - exclude some vertices of path1 from graph copy
+     * - Do another BFS on resulted copy (result = path)
+     */
+
+    assert(g && from < g->vertices_number && to < g->vertices_number);
+
+    /* TODO BFS path from -> to (result = path1) */
+
+    /* TODO exclude some vertices of path1 from graph copy */
+
+    /* TODO Do another BFS on resulted copy (result = path) */
+
+    return;
+
     list_t queue;
     list_element_t *queue_element;
     graph_vertex_idx_t v;

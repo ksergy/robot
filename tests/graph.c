@@ -344,6 +344,7 @@ END_TEST
 
 static
 bool check_bfs(const graph_t const *g, graph_vertex_idx_t v,
+               vector_t *parent, vector_t *distance,
                bfs_dfs_checker_t *checker) {
     graph_vertex_idx_t idx;
 
@@ -423,11 +424,15 @@ START_TEST(test_graph_bfs_ok) {
 
     graph_t g;
     bfs_dfs_checker_t bfs_checker;
+    vector_t parent, distance;
     graph_vertex_idx_t v;
     list_t *adj_list;
     list_element_t *adj_v;
 
     setup_algorithms(&g);
+
+    vector_init(&parent, sizeof(graph_vertex_idx_t), g.vertices_number);
+    vector_init(&distance, sizeof(graph_vertex_idx_t), g.vertices_number);
 
     vector_init(&bfs_checker.neighbours, sizeof(set_t), g.vertices_number);
     for (v = 0; v < g.vertices_number; ++v) {
@@ -444,7 +449,8 @@ START_TEST(test_graph_bfs_ok) {
 
     list_init(&bfs_checker.series, true, sizeof(graph_vertex_idx_t));
 
-    graph_bfs(&g, INITIAL, (graph_vertex_runner_t)check_bfs, &bfs_checker);
+    graph_bfs(&g, INITIAL, &parent, &distance,
+              (graph_vertex_runner_t)check_bfs, &bfs_checker);
 
     ck_assert_int_eq(list_size(&bfs_checker.series), 0);
 
@@ -458,12 +464,16 @@ START_TEST(test_graph_bfs_ok) {
     vector_deinit(&bfs_checker.neighbours);
     list_purge(&bfs_checker.series);
 
+    vector_deinit(&distance);
+    vector_deinit(&parent);
+
     teardown_algorithms(&g);
 }
 END_TEST
 
 static
 bool check_dfs(const graph_t const *g, graph_vertex_idx_t v,
+               vector_t *parent, vector_t *distance,
                bfs_dfs_checker_t *checker) {
     graph_vertex_idx_t idx;
     list_element_t *last_el;
@@ -551,11 +561,15 @@ START_TEST(test_graph_dfs_ok) {
 
     graph_t g;
     bfs_dfs_checker_t dfs_checker;
+    vector_t parent, distance;
     graph_vertex_idx_t v;
     list_t *adj_list;
     list_element_t *adj_v;
 
     setup_algorithms(&g);
+
+    vector_init(&parent, sizeof(graph_vertex_idx_t), g.vertices_number);
+    vector_init(&distance, sizeof(graph_vertex_idx_t), g.vertices_number);
 
     vector_init(&dfs_checker.neighbours, sizeof(set_t), g.vertices_number);
     for (v = 0; v < g.vertices_number; ++v) {
@@ -572,7 +586,8 @@ START_TEST(test_graph_dfs_ok) {
 
     list_init(&dfs_checker.series, true, sizeof(graph_vertex_idx_t));
 
-    graph_dfs(&g, INITIAL, (graph_vertex_runner_t)check_dfs, &dfs_checker);
+    graph_dfs(&g, INITIAL, &parent, &distance,
+              (graph_vertex_runner_t)check_dfs, &dfs_checker);
 
     ck_assert_int_eq(list_size(&dfs_checker.series), 0);
 
@@ -585,6 +600,9 @@ START_TEST(test_graph_dfs_ok) {
 
     vector_deinit(&dfs_checker.neighbours);
     list_purge(&dfs_checker.series);
+
+    vector_deinit(&distance);
+    vector_deinit(&parent);
 
     teardown_algorithms(&g);
 }
@@ -601,6 +619,9 @@ START_TEST(test_graph_random_path_ok) {
     setup_algorithms(&g);
 
     graph_init_default_random_generator(&ctx);
+
+    list_init(&path, true, sizeof(graph_vertex_idx_t));
+
     graph_random_path(
         &g, FROM, TO,
         &path,
@@ -627,6 +648,8 @@ START_TEST(test_graph_random_path_ok) {
         );
 
     ck_assert_int_eq(*(graph_vertex_idx_t *)(path_el1->data), TO);
+
+    list_purge(&path);
 
     teardown_algorithms(&g);
 }

@@ -31,6 +31,7 @@ typedef void (*graph_vertex_purger_t)(const graph_t const *g,
                                       void *data);
 typedef bool (*graph_vertex_runner_t)(const graph_t const *g,
                                       graph_vertex_idx_t v,
+                                      vector_t *parent, vector_t *distance,
                                       void *priv);
 
 struct graph {
@@ -93,8 +94,10 @@ graph_edge_found_t graph_test_edge_idx(const graph_t const *g,
                                        graph_edge_idx_t idx);
 
 void graph_bfs(const graph_t const *g, graph_vertex_idx_t from,
+               vector_t *parent, vector_t *distance,
                graph_vertex_runner_t runner, void *priv);
 void graph_dfs(const graph_t const *g, graph_vertex_idx_t from,
+               vector_t *parent, vector_t *distance,
                graph_vertex_runner_t runner, void *priv);
 
 void graph_random_path(const graph_t const *g,
