@@ -406,15 +406,15 @@ void graph_dfs(const graph_t *g,
     dfs_bfs(g, from, runner, priv, list_end);
 }
 
-list_t *graph_random_path(const graph_t *g,
-                          graph_vertex_idx_t from, graph_vertex_idx_t to,
-                          uint64_t (*random_generator)(void *ptr), void *ptr) {
+void graph_random_path(const graph_t *g,
+                       graph_vertex_idx_t from, graph_vertex_idx_t to,
+                       list_t *path,
+                       uint64_t (*random_generator)(void *ptr), void *ptr) {
     /* TODO BFS + mix */
     list_t queue;
     list_element_t *queue_element;
     graph_vertex_idx_t v;
     set_t used;
-    list_t *path;
     list_t *neighbours;
     list_element_t *neighbour;
     vector_t neighbours_rearranged;
@@ -423,7 +423,6 @@ list_t *graph_random_path(const graph_t *g,
 
     assert(g && from < g->vertices_number && to < g->vertices_number);
 
-    path = malloc(sizeof(list_t));
     list_init(path, true, sizeof(graph_vertex_idx_t));
 
     set_init(&used);
@@ -477,8 +476,6 @@ list_t *graph_random_path(const graph_t *g,
 
     list_purge(&queue);
     set_purge(&used);
-
-    return path;
 }
 
 void graph_untie_path(const graph_t *g, list_t *path) {

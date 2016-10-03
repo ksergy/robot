@@ -97,11 +97,12 @@ void graph_bfs(const graph_t const *g, graph_vertex_idx_t from,
 void graph_dfs(const graph_t const *g, graph_vertex_idx_t from,
                graph_vertex_runner_t runner, void *priv);
 
-list_t *graph_random_path(const graph_t const *g,
-                          graph_vertex_idx_t from,
-                          graph_vertex_idx_t to,
-                          uint64_t (*random_generator)(void *ptr),
-                          void *ptr);
+void graph_random_path(const graph_t const *g,
+                       graph_vertex_idx_t from,
+                       graph_vertex_idx_t to,
+                       list_t *path,
+                       uint64_t (*random_generator)(void *ptr),
+                       void *ptr);
 void graph_untie_path(const graph_t const *g, list_t *path);
 
 static inline

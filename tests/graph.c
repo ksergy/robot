@@ -591,9 +591,43 @@ START_TEST(test_graph_dfs_ok) {
 END_TEST
 
 START_TEST(test_graph_random_path_ok) {
+    static const graph_vertex_idx_t FROM    = 0,
+                                    TO      = 7;
     graph_t g;
+    graph_drg_ctx_t ctx;
+    list_t path;
+    list_element_t *path_el1, *path_el2;
+
     setup_algorithms(&g);
-    ck_assert_int_ne(0,0);
+
+    graph_init_default_random_generator(&ctx);
+    graph_random_path(
+        &g, FROM, TO,
+        &path,
+        (uint64_t (*)(void *))graph_default_random_generator,
+        &ctx
+    );
+
+    path_el1 = list_begin(&path);
+
+    ck_assert_ptr_ne(path_el1, NULL);
+
+    ck_assert_int_eq(*(graph_vertex_idx_t *)(path_el1->data), FROM);
+
+    /* check if path from -> to is valid */
+    for (path_el2 = list_next(&path, path_el1); path_el2;
+         path_el1 = path_el2, path_el2 = list_next(&path, path_el1))
+        ck_assert_int_eq(
+            true,
+            graph_test_edge(
+                &g,
+                *(graph_vertex_idx_t *)(path_el1->data),
+                *(graph_vertex_idx_t *)(path_el2->data)
+            ).found
+        );
+
+    ck_assert_int_eq(*(graph_vertex_idx_t *)(path_el1->data), TO);
+
     teardown_algorithms(&g);
 }
 END_TEST
