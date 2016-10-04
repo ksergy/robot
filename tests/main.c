@@ -36,7 +36,7 @@ int main(/*int argc, char *argv[]*/) {
     s = multigrid_converter_suite();
     srunner_add_suite(runner, s);
 
-    srunner_run_all(runner, CK_VERBOSE);
+    srunner_run_all(runner, CK_NORMAL);
     nfailed = srunner_ntests_failed(runner);
 
     srunner_free(runner);
