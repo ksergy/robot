@@ -714,7 +714,7 @@ Suite *graph_suite(void) {
 
     tcase_add_test(tc, test_graph_bfs_ok);
     tcase_add_test(tc, test_graph_dfs_ok);
-    tcase_add_test(tc, test_graph_random_path_ok);
+    tcase_add_loop_test(tc, test_graph_random_path_ok, 0, 1000);
     tcase_add_test(tc, test_graph_untie_path_ok);
 
     suite_add_tcase(s, tc);
