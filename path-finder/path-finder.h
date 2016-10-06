@@ -23,6 +23,34 @@ enum path_finder_class {
 struct path_finder;
 typedef struct path_finder path_finder_t;
 
+typedef uint32_t node_cost_t;
+
+# define NODE_COST_INF ((node_cost_t)-1)
+
+/**
+ * Node cost getter will receive at least three arguments:
+ * \param ctx user provided context
+ * \param pf the path finder object
+ * \param node node to retrieve cost for
+ * \return \c node_cost_t a value [ 0 .. 2^32-1 )
+ *
+ * Node cost of 2^32 - 1 is reserved for infinity.
+ *
+ * Depending on path finding algorithms chosen there may be additional
+ * parameters (see \c *_cost_getter_t types).
+ */
+typedef node_cost_t (*generic_cost_getter_t)(void *ctx,
+                                             const path_finder_t const *pf,
+                                             graph_vertex_idx_t node);
+/**
+ * Retrieve cost for edge \c node -> \c neighbour
+ */
+typedef node_cost_t (*a_star_cost_getter_t)(void *ctx,
+                                            const path_finder_t const *pf,
+                                            graph_vertex_idx_t node,
+                                            graph_vertex_idx_t neighbour);
+
+
 /** the path finder object description */
 struct path_finder {
     /** type of path finder */

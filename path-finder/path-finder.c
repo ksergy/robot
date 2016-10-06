@@ -1,6 +1,18 @@
 #include "path-finder.h"
+#include "private/types.h"
 
 #include <assert.h>
+
+/************************* functions *************************/
+extern path_finder_func_t bfs;
+extern path_finder_func_t dfs;
+extern path_finder_func_t a_star;
+
+/************************* data *************************/
+static path_finder_func_t *PATH_FINDER[pf_count] = {
+    [pf_bfs] = bfs,
+    [pf_dfs] = dfs
+};
 
 /************************* API *************************/
 void path_finder_init(path_finder_t *pf,
@@ -23,5 +35,6 @@ bool path_finder_find_path(const path_finder_t *pf,
                            graph_vertex_idx_t from, graph_vertex_idx_t to,
                            list_t *path) {
     assert(pf && path);
-    return false;
+
+    return PATH_FINDER[pf->cls](pf, from, to, path);
 }
