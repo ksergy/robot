@@ -14,6 +14,7 @@ target_link_libraries(tests
                       containers
                       avl hash-map set
                       multigrid graph multigrid-converter
+                      path-finder
                       ${check_LDFLAGS})
 
 add_test(NAME tests COMMAND tests)

@@ -5,6 +5,7 @@
 #include "multigrids.h"
 #include "graph.h"
 #include "multigrid-converter.h"
+#include "path-finder.h"
 
 #include <check.h>
 #include <stdlib.h>
@@ -34,6 +35,9 @@ int main(/*int argc, char *argv[]*/) {
     srunner_add_suite(runner, s);
 
     s = multigrid_converter_suite();
+    srunner_add_suite(runner, s);
+
+    s = path_finder_suite();
     srunner_add_suite(runner, s);
 
     srunner_run_all(runner, CK_NORMAL);
