@@ -633,6 +633,7 @@ void graph_init_default_random_generator(graph_drg_ctx_t *ctx) {
 
     assert(ctx);
 
+    memset(&ctx->rd, 0, sizeof(ctx->rd));
     ret = initstate_r(time(NULL), ctx->state, sizeof(ctx->state), &ctx->rd);
 
     assert(0 == ret);
