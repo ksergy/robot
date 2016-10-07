@@ -87,7 +87,7 @@ struct path_finder {
  */
 void path_finder_init(path_finder_t *pf,
                       enum path_finder_class cls, graph_t *g,
-                      void *cost_getter_cb,
+                      generic_cost_getter_t cost_getter_cb,
                       void *cost_getter_ctx);
 void path_finder_deinit(path_finder_t *pf);
 
