@@ -7,6 +7,23 @@
 
 #include <stdbool.h>
 
+static inline
+void traverse_path(graph_vertex_idx_t current,
+                   avl_tree_t *came_from,
+                   list_t *path) {
+    avl_tree_node_t *node;
+
+    *(graph_vertex_idx_t *)(list_prepend(path)->data) = current;
+
+    node = avl_tree_get(came_from, current);
+    current = *(graph_vertex_idx_t *)(node->data);
+
+    for (node = avl_tree_get(came_from, current); node;
+         current = *(graph_vertex_idx_t *)(node->data),
+         node = avl_tree_get(came_from, current))
+        *(graph_vertex_idx_t *)(list_prepend(path)->data) = current;
+}
+
 bool a_star(const path_finder_t *pf,
             graph_vertex_idx_t from, graph_vertex_idx_t to,
             list_t *path) {
@@ -41,8 +58,7 @@ bool a_star(const path_finder_t *pf,
         current = (graph_vertex_idx_t)(current_node->key);
 
         if (to == current) {
-#warning "Unimplemented p[ath traversing"
-            /* TODO traverse_path(); */
+            traverse_path(current, &came_from, path);
 
             avl_tree_purge(&f_score);
             avl_tree_purge(&g_score);

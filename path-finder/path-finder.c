@@ -11,7 +11,8 @@ extern path_finder_func_t a_star;
 /************************* data *************************/
 static path_finder_func_t *PATH_FINDER[pf_count] = {
     [pf_bfs] = bfs,
-    [pf_dfs] = dfs
+    [pf_dfs] = dfs,
+    [pf_a_star] = a_star
 };
 
 /************************* API *************************/
@@ -35,6 +36,8 @@ bool path_finder_find_path(const path_finder_t *pf,
                            graph_vertex_idx_t from, graph_vertex_idx_t to,
                            list_t *path) {
     assert(pf && path);
+
+    list_init(path, true, sizeof(graph_vertex_idx_t));
 
     return PATH_FINDER[pf->cls](pf, from, to, path);
 }
