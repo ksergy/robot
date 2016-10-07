@@ -8,16 +8,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-#if 0
-static const int _PRE_FRONT = 1;
-static const int _POST_BACK = 2;
-static const void const *PRE_FRONT_PTR = &_PRE_FRONT;
-static const void const *POST_BACK_PTR = &_POST_BACK;
-
-#define PRE_FRONT ((void *)PRE_FRONT_PTR)
-#define POST_BACK ((void *)POST_BACK_PTR)
-#endif
-
 typedef bool (*reallocer_func)(buffer_t *b, size_t newsize);
 
 static
@@ -282,6 +272,9 @@ typedef void (*list_el_deallocator)(list_element_t *el);
 static
 list_element_t *alloc_lel_inplace(list_t *l) {
     list_element_t *le = malloc(sizeof(list_element_t) + l->element_size);
+
+    assert(le);
+
     le->data = le + 1;
     le->host = l;
     le->next = le->prev = NULL;
@@ -291,6 +284,9 @@ list_element_t *alloc_lel_inplace(list_t *l) {
 static
 list_element_t *alloc_lel_simple(list_t *l) {
     list_element_t *le = malloc(sizeof(list_element_t));
+
+    assert(le);
+
     le->data = NULL;
     le->host = l;
     le->next = le->prev = NULL;
@@ -466,7 +462,7 @@ list_element_t *list_remove_and_advance(list_t *l, list_element_t *el) {
 }
 
 void list_purge(list_t *l) {
-    list_element_t *el;
+    list_element_t *el, *el2;
 
     assert(l);
 
@@ -476,8 +472,10 @@ void list_purge(list_t *l) {
         return;
     }
 
-    for (el = l->front; el; el = el->next)
+    for (el = l->front; el; el = el2) {
+        el2 = el->next;
         list_el_alloc_dealloc[l->inplace].deallocator(el);
+    }
 
     l->front = NULL;
     l->back = NULL;
