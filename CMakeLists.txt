@@ -22,6 +22,7 @@ add_subdirectory(tests)
 add_subdirectory(multigrid)
 add_subdirectory(graph)
 add_subdirectory(multigrid-converter)
+add_subdirectory(path-finder)
 
 add_executable(main main.c)
-target_link_libraries(main multigrid)
+target_link_libraries(main multigrid multigrid-converter)

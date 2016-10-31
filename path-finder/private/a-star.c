@@ -50,7 +50,7 @@ bool a_star(const path_finder_t *pf,
         pf->cost_getter.a_star(pf->cost_getter_ctx,
                                pf,
                                from, to,
-                               a_star_heuristic);
+                               a_star_estimation);
 
     while (set_size(&open_set)) {
         current_node = avl_tree_node_min(f_score.root);
@@ -71,7 +71,7 @@ bool a_star(const path_finder_t *pf,
 
         set_remove(&open_set, current);
 
-        set_add_single(&closed_set, current); /* FIXME not consistent heuristic */
+        set_add_single(&closed_set, current); /* FIXME not consistent estimation */
 
         neighbours = (list_t *)vector_get(&pf->g->adjacency_list, current);
 
@@ -84,7 +84,7 @@ bool a_star(const path_finder_t *pf,
             neighbour = *(graph_vertex_idx_t *)(neighbour_el->data);
 
             if (set_count(&closed_set, neighbour))
-                continue;   /* FIXME not consistent heuristic */
+                continue;   /* FIXME not consistent estimation */
 
             g_score_node = avl_tree_get(&g_score, current);
 
@@ -126,7 +126,7 @@ bool a_star(const path_finder_t *pf,
                 pf->cost_getter_ctx,
                 pf,
                 neighbour, to,
-                a_star_heuristic
+                a_star_estimation
             );
         }   /* for (neighbour_el = list_begin(neighbours); neighbour_el; */
     }   /* while (set_size(&open_set)) */

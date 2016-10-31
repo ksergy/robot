@@ -45,12 +45,12 @@ typedef node_cost_t (*generic_cost_getter_t)(void *ctx,
 
 enum path_finder_a_star_cost_class {
     a_star_distance,
-    a_star_heuristic,
+    a_star_estimation,
     a_star_count
 };
 /**
  * Retrieve cost for edge \c node -> \c that_node
- * or heuristic cost estimation for path \c node -> \c that_node
+ * or cost estimation for path \c node -> \c that_node
  * depending on \c cls calculation class.
  */
 typedef node_cost_t (*a_star_cost_getter_t)(void *ctx,

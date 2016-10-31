@@ -170,8 +170,8 @@ void dfs(const graph_t *g, graph_vertex_idx_t from,
             break;
 
         neighbours = (list_t *)vector_get((vector_t *)&g->adjacency_list, from);
-        for (neighbour = list_begin(neighbours);
-             neighbour; neighbour = list_next(neighbours, neighbour)) {
+        for (neighbour = list_end(neighbours);
+             neighbour; neighbour = list_prev(neighbours, neighbour)) {
             graph_vertex_idx_t v = *(graph_vertex_idx_t *)neighbour->data;
 
             if (set_count(&used, v) > 0)
@@ -182,7 +182,7 @@ void dfs(const graph_t *g, graph_vertex_idx_t from,
 
             *(graph_vertex_idx_t *)vector_get(distance, v) =
             *(graph_vertex_idx_t *)vector_get(distance, from) + 1;
-        }   /* for (neighbour = list_begin(neighbours); */
+        }   /* for (neighbour = list_end(neighbours); */
     } while (list_size(series));
 
     set_purge(&used);
