@@ -13,7 +13,7 @@ int main(/*int argc, char *argv[]*/) {
     SRunner *runner;
 
     s = multigrid_suite();
-    srunner_add_suite(runner, s);
+    runner = srunner_create(s);
 
     s = graph_suite();
     srunner_add_suite(runner, s);
