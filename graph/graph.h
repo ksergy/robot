@@ -1,8 +1,8 @@
 #ifndef _GRAPH_H_
 # define _GRAPH_H_
 
-# include "lib/containers.h"
-# include "lib/avl-tree.h"
+# include <containers.h>
+# include <avl-tree.h>
 
 # include <stdbool.h>
 # include <stdlib.h>

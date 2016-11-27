@@ -5,9 +5,9 @@
  * Multigrid library.
  */
 
-# include "lib/containers.h"
-# include "lib/set.h"
-# include "lib/avl-tree.h"
+# include <containers.h>
+# include <set.h>
+# include <avl-tree.h>
 
 # include <stdint.h>
 # include <stdbool.h>

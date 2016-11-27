@@ -17,11 +17,15 @@ endif (WITH_COVERAGE)
 
 enable_testing()
 
+include(FindPkgConfig)
+
+pkg_check_modules(misc REQUIRED libmisc)
+
 add_subdirectory(tests)
 add_subdirectory(multigrid)
 add_subdirectory(graph)
 add_subdirectory(multigrid-converter)
 add_subdirectory(path-finder)
 
-add_executable(main main.c)
-target_link_libraries(main multigrid multigrid-converter)
+#add_executable(main main.c)
+#target_link_libraries(main multigrid multigrid-converter)

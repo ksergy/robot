@@ -1,8 +1,8 @@
 #include "types.h"
 #include "path-finder.h"
 #include "graph/graph.h"
-#include "lib/set.h"
-#include "lib/avl-tree.h"
+#include <set.h>
+#include <avl-tree.h>
 
 #include <stdbool.h>
 

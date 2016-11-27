@@ -2,7 +2,7 @@
 # define _PATH_FINDER_PRIVATE_TYPES_H_
 
 # include "graph/graph.h"
-# include "lib/containers.h"
+# include <containers.h>
 
 struct path_finder;
 typedef struct path_finder path_finder_t;

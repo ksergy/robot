@@ -1,7 +1,7 @@
 #include "multigrid-converter.h"
 #include "multigrid-data.h"
 #include "multigrid-converter/multigrid-converter.h"
-#include "lib/avl-tree.h"
+#include <avl-tree.h>
 
 #include <stdlib.h>
 

@@ -1,6 +1,6 @@
 #include "multigrid-converter.h"
 
-#include "lib/set.h"
+#include <set.h>
 
 #include <stdlib.h>
 #include <assert.h>

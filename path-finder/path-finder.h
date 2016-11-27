@@ -2,7 +2,7 @@
 # define _PATH_FINDER_H_
 
 # include "graph/graph.h"
-# include "lib/containers.h"
+# include <containers.h>
 
 # include <stdbool.h>
 

@@ -1,7 +1,7 @@
 #include "graph.h"
 #include "graph-data.h"
 #include "graph/graph.h"
-#include "lib/set.h"
+#include <set.h>
 
 #include <stdio.h>
 

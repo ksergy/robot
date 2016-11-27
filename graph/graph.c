@@ -1,5 +1,5 @@
 #include "graph.h"
-#include "lib/set.h"
+#include <set.h>
 
 #include <string.h>
 #include <stdlib.h>

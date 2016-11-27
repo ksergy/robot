@@ -9,7 +9,7 @@ add_executable(tests ${tests_src})
 
 set_target_properties(tests
                       PROPERTIES
-                      COMPILE_FLAGS "${check_CFLAGS}")
+                      COMPILE_FLAGS "${check_CFLAGS} ${misc_CFLAGS}")
 target_link_libraries(tests
                       multigrid graph multigrid-converter
                       path-finder
